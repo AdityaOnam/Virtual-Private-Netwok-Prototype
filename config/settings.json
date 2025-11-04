@@ -1,0 +1,18 @@
+{
+  "theme": "Light",
+  "language": "English",
+  "start_minimized": true,
+  "auto_connect": true,
+  "show_notifications": true,
+  "custom_dns": false,
+  "primary_dns": "",
+  "secondary_dns": "",
+  "connection_timeout": 30,
+  "keepalive_interval": 25,
+  "killswitch": true,
+  "dns_leak_protection": true,
+  "log_level": "DEBUG",
+  "log_to_file": false,
+  "mtu_size": 1420,
+  "thread_count": 2
+}

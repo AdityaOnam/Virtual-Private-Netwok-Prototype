@@ -1,0 +1,51 @@
+{
+  "servers": [
+    {
+      "id": "local-server",
+      "name": "Local Server",
+      "country": "Local",
+      "flag": "HOME",
+      "endpoint": "127.0.0.1:51820",
+      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
+      "description": "Local development server for testing",
+      "region": "local",
+      "location": "Your Computer"
+    },
+    {
+      "id": "india-mumbai",
+      "name": "Mumbai",
+      "country": "India",
+      "flag": "IN",
+      "endpoint": "127.0.0.1:51821",
+      "public_key": "FMwWQqWGkKYq3pH/O4rZVl+Px3shMTit8voZePN+X9FU=",
+      "description": "India - Mumbai server",
+      "region": "asia",
+      "location": "Mumbai, India"
+    },
+    {
+      "id": "eu-frankfurt",
+      "name": "Frankfurt",
+      "country": "Germany",
+      "flag": "DE",
+      "endpoint": "127.0.0.1:51822",
+      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
+      "description": "Europe - Frankfurt server",
+      "region": "europe",
+      "location": "Frankfurt, Germany"
+    },
+    {
+      "id": "us-newyork",
+      "name": "New York",
+      "country": "United States",
+      "flag": "US",
+      "endpoint": "127.0.0.1:51823",
+      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
+      "description": "United States - New York server",
+      "region": "americas",
+      "location": "New York, USA"
+    }
+  ],
+  "default_server": "local-server",
+  "auto_connect": false,
+  "last_connected": null
+}

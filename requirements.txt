@@ -1,0 +1,22 @@
+# Core GUI Framework
+PySide6>=6.5.0
+
+# Network and VPN
+requests>=2.31.0
+cryptography>=41.0.0
+psutil>=5.9.0
+
+# Configuration and Data
+PyYAML>=6.0
+jsonschema>=4.19.0
+
+# Logging and Monitoring
+colorlog>=6.7.0
+
+# Development and Testing
+pytest>=7.4.0
+pytest-qt>=4.2.0
+
+# Optional: For advanced features
+# firebase-admin>=6.2.0  # For cloud features
+# speedtest-cli>=2.1.3   # For speed testing

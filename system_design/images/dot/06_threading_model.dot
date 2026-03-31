@@ -1,0 +1,21 @@
+
+digraph threading {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    
+    MainThread [label="Main Thread\n(Qt Event Loop)\nGUI Rendering"];
+    
+    ConnectionMonitor [label="ConnectionMonitor Thread\n(QThread)\nPolls every 2s"];
+    
+    VPNThread [label="VPN Connection Thread\n(background)\nAsync wg-quick"];
+    
+    PingThread [label="PingTest Thread\n(ThreadPool)\nParallel Tests"];
+    
+    MainThread -> ConnectionMonitor [label="Signal Emit"];
+    MainThread -> VPNThread [label="Start"];
+    MainThread -> PingThread [label="Start Pool"];
+    
+    ConnectionMonitor -> MainThread [label="queued_emit"];
+    VPNThread -> MainThread [label="queued_emit"];
+    PingThread -> MainThread [label="queued_emit"];
+}

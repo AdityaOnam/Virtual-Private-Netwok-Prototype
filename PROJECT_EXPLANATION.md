@@ -6,7 +6,7 @@ This document explains every file in the LeAmitVPN project, step-by-step, so you
 
 ## 🎯 **PART 1: PROJECT OVERVIEW**
 
-### What is LeAmitVPN?
+### What is ONAMVPN?
 LeAmitVPN is a **VPN client application** with a graphical user interface (GUI). It allows users to:
 - Connect to VPN servers using WireGuard protocol
 - Select servers from a visual interface
@@ -15,7 +15,7 @@ LeAmitVPN is a **VPN client application** with a graphical user interface (GUI).
 
 ### Architecture Overview
 ```
-LeAmitVPN/
+ONAMVPN/
 ├── main.py                    # 🚪 Entry point - starts the app
 ├── setup.py                   # 🔧 Setup script - initializes project
 ├── requirements.txt           # 📦 Python dependencies list

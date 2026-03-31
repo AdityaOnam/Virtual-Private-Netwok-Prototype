@@ -1,0 +1,25 @@
+
+digraph connection_sequence {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    
+    subgraph cluster_phases {
+        label="Connection Phases";
+        P1 [label="1. User Click"];
+        P2 [label="2. Server Select"];
+        P3 [label="3. WG Check"];
+        P4 [label="4. Key Gen"];
+        P5 [label="5. Config Create"];
+        P6 [label="6. Save Config"];
+        P7 [label="7. Thread Start"];
+        P8 [label="8. Execute wg-quick"];
+        P9 [label="9. Tunnel Setup"];
+        P10 [label="10. State Update"];
+        P11 [label="11. UI Refresh"];
+        P12 [label="12. Connected!"];
+        
+        P1 -> P2 -> P3 -> P4 -> P5 -> P6 -> P7 -> P8 -> P9 -> P10 -> P11 -> P12;
+    }
+    
+    Time [label="Time: 10-30 seconds"];
+}

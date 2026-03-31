@@ -1,5 +1,5 @@
 """
-Settings panel for LeAmitVPN
+Settings panel for OnamVPN - a local VPN with GUI built on top of OnamVPN's core architecture, using WireGuard for secure tunneling.
 """
 
 from PySide6.QtWidgets import (

@@ -1,0 +1,66 @@
+
+digraph architecture {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    
+    subgraph cluster_ui {
+        label="GUI Layer (PySide6)";
+        style=filled;
+        color=lightblue;
+        MainWindow [label="MainWindow
+(760 LOC)"];
+        ServerGrid [label="ServerGrid
+(320 LOC)"];
+        SettingsPanel [label="SettingsPanel
+(780 LOC)"];
+    }
+    
+    subgraph cluster_vpn {
+        label="VPN Core (Handler Layer)";
+        style=filled;
+        color=lightgreen;
+        WireGuardHandler [label="WireGuardHandler"];
+        RealWindowsWireGuard [label="RealWindowsWireGuard"];
+        SimpleVPNHandler [label="SimpleVPNHandler"];
+    }
+    
+    subgraph cluster_utils {
+        label="Utilities & Logging";
+        style=filled;
+        color=lightyellow;
+        Logger [label="Logger"];
+        SpeedTest [label="SpeedTest"];
+        Encryption [label="Encryption"];
+    }
+    
+    subgraph cluster_data {
+        label="Data Layer (Config)";
+        style=filled;
+        color=lightcyan;
+        ServersJSON [label="servers.json"];
+        SettingsJSON [label="settings.json"];
+        ConfigFiles [label="WireGuard .conf"];
+    }
+    
+    MainWindow -> ServerGrid;
+    MainWindow -> SettingsPanel;
+    MainWindow -> WireGuardHandler;
+    MainWindow -> RealWindowsWireGuard;
+    MainWindow -> SimpleVPNHandler;
+    
+    ServerGrid -> SpeedTest;
+    SettingsPanel -> Logger;
+    
+    WireGuardHandler -> Logger;
+    RealWindowsWireGuard -> Logger;
+    SimpleVPNHandler -> Logger;
+    
+    WireGuardHandler -> ServersJSON;
+    RealWindowsWireGuard -> ServersJSON;
+    SimpleVPNHandler -> ServersJSON;
+    
+    MainWindow -> SettingsJSON;
+    SettingsPanel -> SettingsJSON;
+    
+    WireGuardHandler -> ConfigFiles;
+}

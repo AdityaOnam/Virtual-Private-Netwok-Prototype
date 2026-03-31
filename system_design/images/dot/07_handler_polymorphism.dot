@@ -1,0 +1,21 @@
+
+digraph polymorphism {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    
+    Interface [label="VPN Handler\nInterface Contract"];
+    
+    WireGuard [label="WireGuardHandler\n(Cross-platform)"];
+    RealWin [label="RealWindowsWireGuard\n(Windows Native)"];
+    SimpleVPN [label="SimpleVPNHandler\n(Demo/Fallback)"];
+    
+    SelectLogic [label="Handler Selection\nLogic (main.py)"];
+    
+    Interface -> WireGuard;
+    Interface -> RealWin;
+    Interface -> SimpleVPN;
+    
+    SelectLogic -> WireGuard [label="Linux/macOS"];
+    SelectLogic -> RealWin [label="Windows"];
+    SelectLogic -> SimpleVPN [label="Fallback"];
+}

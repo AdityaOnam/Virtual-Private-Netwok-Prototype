@@ -1,0 +1,45 @@
+
+digraph startup {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    
+    Start [shape=ellipse, label="Application Start"];
+    CheckArgs [label="Check Arguments"];
+    
+    GUI [label="GUI Mode"];
+    Server [label="Server Mode"];
+    Speedtest [label="Speedtest Mode"];
+    
+    LoadServers [label="Load servers.json"];
+    LoadSettings [label="Load settings.json"];
+    TestWG [label="Test WireGuard"];
+    SelectHandler [label="Select Handler"];
+    
+    UseReal [label="Use Real Handler"];
+    UseFallback [label="Use Fallback"];
+    
+    ShowWindow [label="Show Main Window"];
+    StartServer [label="Start Server"];
+    RunSpeedtest [label="Run Speedtest"];
+    
+    Start -> CheckArgs;
+    CheckArgs -> GUI [label="--gui"];
+    CheckArgs -> Server [label="--server"];
+    CheckArgs -> Speedtest [label="--speedtest"];
+    
+    GUI -> LoadServers;
+    Server -> LoadServers;
+    Speedtest -> LoadServers;
+    
+    LoadServers -> LoadSettings;
+    LoadSettings -> TestWG;
+    
+    TestWG -> SelectHandler;
+    SelectHandler -> UseReal [label="Success"];
+    SelectHandler -> UseFallback [label="Fail"];
+    
+    UseReal -> ShowWindow [label="GUI"];
+    UseFallback -> ShowWindow;
+    UseReal -> StartServer [label="Server"];
+    UseReal -> RunSpeedtest [label="Speedtest"];
+}

@@ -1,0 +1,25 @@
+
+digraph state_machine {
+    rankdir=TB;
+    node [shape=ellipse];
+    
+    Disconnected [label="DISCONNECTED\n(Initial State)"];
+    Connecting [label="CONNECTING\n(Async Op)"];
+    Connected [label="CONNECTED\n(Tunnel Active)"];
+    Disconnecting [label="DISCONNECTING\n(Cleanup)"];
+    Error [label="ERROR\n(Failed Conn)"];
+    Idle [label="IDLE\n(No Activity)"];
+    
+    Disconnected -> Connecting [label="connect()"];
+    Connecting -> Connected [label="Success"];
+    Connecting -> Error [label="Fail"];
+    
+    Connected -> Idle [label="No Activity"];
+    Idle -> Connected [label="Activity Detected"];
+    
+    Connected -> Disconnecting [label="disconnect()"];
+    Idle -> Disconnecting [label="disconnect()"];
+    
+    Disconnecting -> Disconnected [label="Done"];
+    Error -> Disconnected [label="Reset"];
+}

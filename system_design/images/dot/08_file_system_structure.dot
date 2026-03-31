@@ -1,0 +1,30 @@
+
+digraph filesystem {
+    rankdir=TB;
+    node [shape=folder];
+    
+    Root [label="OnamVPN/"];
+    Config [label="config/"];
+    Logs [label="logs/"];
+    Keys [label="keys/"];
+    GUI [label="gui/"];
+    VPNCore [label="vpn_core/"];
+    
+    Root -> Config;
+    Root -> Logs;
+    Root -> Keys;
+    Root -> GUI;
+    Root -> VPNCore;
+    
+    Config -> ServersJSON [shape=note, label="servers.json"];
+    Config -> SettingsJSON [shape=note, label="settings.json"];
+    Config -> ClientConf [shape=note, label="*.conf"];
+    
+    Logs -> LogFile [shape=note, label="onamvpn.log"];
+    
+    GUI -> MainWindow [shape=note, label="main_window.py"];
+    GUI -> ServerGrid [shape=note, label="server_grid.py"];
+    
+    VPNCore -> Handler [shape=note, label="*_handler.py"];
+    VPNCore -> Logger [shape=note, label="logger.py"];
+}

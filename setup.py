@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for LeAmitVPN
+Setup script for ONAMVPN
 """
 
 import os

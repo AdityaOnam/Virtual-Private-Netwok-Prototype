@@ -1,0 +1,43 @@
+
+digraph dependencies {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    
+    Main [label="main.py"];
+    GUI_Init [label="gui/__init__.py"];
+    MainWindow [label="main_window.py"];
+    ServerGrid [label="server_grid.py"];
+    SettingsPanel [label="settings_panel.py"];
+    
+    VPN_Init [label="vpn_core/__init__.py"];
+    WireGuard [label="wireguard_handler.py"];
+    RealWin [label="real_windows_wireguard.py"];
+    SimpleVPN [label="simple_vpn_handler.py"];
+    
+    Logger [label="logger.py"];
+    SpeedTest [label="speedtest_utils.py"];
+    Encrypt [label="encryption_utils.py"];
+    
+    Main -> GUI_Init;
+    Main -> VPN_Init;
+    
+    GUI_Init -> MainWindow;
+    GUI_Init -> ServerGrid;
+    GUI_Init -> SettingsPanel;
+    
+    VPN_Init -> WireGuard;
+    VPN_Init -> RealWin;
+    VPN_Init -> SimpleVPN;
+    
+    MainWindow -> Logger;
+    ServerGrid -> Logger;
+    SettingsPanel -> Logger;
+    
+    WireGuard -> SpeedTest;
+    WireGuard -> Logger;
+    
+    RealWin -> Logger;
+    SimpleVPN -> Logger;
+    
+    MainWindow -> Encrypt;
+}

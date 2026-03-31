@@ -1,5 +1,5 @@
 """
-Encryption utilities for LeAmitVPN
+Encryption utilities for OnamVPN
 Provides additional encryption layer on top of WireGuard
 """
 
@@ -16,7 +16,7 @@ from .logger import get_logger
 
 
 class EncryptionManager:
-    """Manages encryption operations for LeAmitVPN"""
+    """Manages encryption operations for OnamVPN"""
     
     def __init__(self, password: Optional[str] = None):
         """

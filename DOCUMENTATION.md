@@ -48,7 +48,7 @@
 
 ## System Architecture
 
-![Architecture Overview](./system_design/images/svg/01_architecture_overview.svg)
+![Architecture Overview](./system_design/architecture_warp.svg)
 
 ### Architecture Layers
 
@@ -199,9 +199,7 @@ else:  # Linux/macOS
 
 ## VPN Connection Lifecycle
 
-![VPN Connection Sequence](./system_design/images/svg/03_vpn_connection_sequence.svg)
-
-### Connection Phases (Detailed Timeline)
+### Cloudflare WARP Tunnel Creation
 
 #### Phase 1-3: Initialization (< 1 second)
 1. **User clicks "Connect"** on ServerCard
@@ -963,7 +961,7 @@ tail -f logs/onamvpn.log
 
 ## License
 
-OnamVPN is licensed under MIT License. See LICENSE file for details.
+
 
 ---
 

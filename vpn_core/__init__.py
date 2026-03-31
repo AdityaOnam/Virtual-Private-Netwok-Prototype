@@ -1,5 +1,5 @@
 """
-LeAmitVPN Core Module
+OnamVPN Core Module
 
 This module contains the core VPN functionality including:
 - WireGuard integration

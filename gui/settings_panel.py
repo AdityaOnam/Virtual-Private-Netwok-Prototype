@@ -17,7 +17,7 @@ from vpn_core.logger import get_logger
 
 
 class SettingsPanel(QDialog):
-    """Settings dialog for LeAmitVPN"""
+    """Settings dialog for OnamVPN"""
     
     settings_changed = Signal(dict)
     
@@ -463,7 +463,7 @@ Architecture: {platform.machine()}
     def export_config(self):
         """Export configuration to file"""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Configuration", "leamitvpn_config.json", "JSON Files (*.json)"
+            self, "Export Configuration", "onamvpn_config.json", "JSON Files (*.json)"
         )
         
         if file_path:

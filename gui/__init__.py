@@ -1,5 +1,5 @@
 """
-LeAmitVPN GUI Module
+OnamVPN GUI Module
 
 This module contains the PySide6 GUI components for the VPN application.
 """

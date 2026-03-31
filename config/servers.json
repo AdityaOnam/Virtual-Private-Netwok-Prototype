@@ -1,51 +1,63 @@
 {
   "servers": [
     {
-      "id": "local-server",
-      "name": "Local Server",
-      "country": "Local",
-      "flag": "HOME",
-      "endpoint": "127.0.0.1:51820",
-      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
-      "description": "Local development server for testing",
-      "region": "local",
-      "location": "Your Computer"
-    },
-    {
-      "id": "india-mumbai",
-      "name": "Mumbai",
-      "country": "India",
-      "flag": "IN",
-      "endpoint": "127.0.0.1:51821",
-      "public_key": "FMwWQqWGkKYq3pH/O4rZVl+Px3shMTit8voZePN+X9FU=",
-      "description": "India - Mumbai server",
-      "region": "asia",
-      "location": "Mumbai, India"
+      "id": "cloudflare-warp",
+      "name": "Cloudflare WARP",
+      "country": "Global",
+      "flag": "🌐",
+      "endpoint": "engage.cloudflareclient.com:2408",
+      "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+      "description": "Cloudflare WARP - Nearest edge node",
+      "region": "global",
+      "location": "Cloudflare Global Network",
+      "client_address": "172.16.0.2/32",
+      "dns": "1.1.1.1, 1.0.0.1",
+      "mtu": 1280
     },
     {
       "id": "eu-frankfurt",
       "name": "Frankfurt",
       "country": "Germany",
       "flag": "DE",
-      "endpoint": "127.0.0.1:51822",
-      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
-      "description": "Europe - Frankfurt server",
+      "endpoint": "162.159.193.1:2408",
+      "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+      "description": "Europe - Frankfurt via Cloudflare WARP",
       "region": "europe",
-      "location": "Frankfurt, Germany"
+      "location": "Frankfurt, Germany",
+      "client_address": "172.16.0.2/32",
+      "dns": "1.1.1.1, 1.0.0.1",
+      "mtu": 1280
     },
     {
       "id": "us-newyork",
       "name": "New York",
       "country": "United States",
       "flag": "US",
-      "endpoint": "127.0.0.1:51823",
-      "public_key": "Xw0obosMv4X4EF+g4Lt+kd8vazidUdH42NL3cF6kB20=",
-      "description": "United States - New York server",
+      "endpoint": "162.159.192.1:2408",
+      "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+      "description": "United States - New York via Cloudflare WARP",
       "region": "americas",
-      "location": "New York, USA"
+      "location": "New York, USA",
+      "client_address": "172.16.0.2/32",
+      "dns": "1.1.1.1, 1.0.0.1",
+      "mtu": 1280
+    },
+    {
+      "id": "india-mumbai",
+      "name": "Mumbai",
+      "country": "India",
+      "flag": "IN",
+      "endpoint": "162.159.195.1:2408",
+      "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+      "description": "India - Mumbai via Cloudflare WARP",
+      "region": "asia",
+      "location": "Mumbai, India",
+      "client_address": "172.16.0.2/32",
+      "dns": "1.1.1.1, 1.0.0.1",
+      "mtu": 1280
     }
   ],
-  "default_server": "local-server",
+  "default_server": "eu-frankfurt",
   "auto_connect": false,
   "last_connected": null
 }

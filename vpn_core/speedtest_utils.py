@@ -1,5 +1,5 @@
 """
-Speed testing utilities for LeAmitVPN
+Speed testing utilities for OnamVPN
 Provides ping testing, speed testing, and server performance monitoring
 """
 

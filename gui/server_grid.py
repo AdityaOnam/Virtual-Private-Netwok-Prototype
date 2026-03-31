@@ -17,53 +17,57 @@ from vpn_core.logger import get_logger
 
 class PingTestThread(QThread):
     """Thread for testing server ping"""
-    ping_result = Signal(str, int)  # server_id, ping_time
-    
+    ping_result   = Signal(str, int)   # server_id, ping_time
+    ping_complete = Signal(dict)       # {server_id: ping_time} — all done
+
     def __init__(self, servers):
         super().__init__()
         self.servers = servers
         self.running = True
     
     def run(self):
-        """Test ping for all servers"""
+        """Test ping for all servers using ICMP (system ping command)."""
         import subprocess
-        import socket
-        
+        import re
+
         for server in self.servers:
             if not self.running:
                 break
-                
+
             try:
-                # Extract host and port from endpoint
+                # Extract host from endpoint (ignore port — ICMP doesn't use it)
                 endpoint = server['endpoint']
-                if ':' in endpoint:
-                    host, port = endpoint.split(':')
+                host = endpoint.split(':')[0] if ':' in endpoint else endpoint
+
+                # Run system ping: 2 packets, 2s timeout each
+                result = subprocess.run(
+                    ['ping', '-n', '2', '-w', '2000', host],
+                    capture_output=True, text=True, timeout=8
+                )
+
+                # Parse average time from ping output
+                # Windows ping output: "Average = 92ms"
+                match = re.search(r'Average\s*=\s*(\d+)ms', result.stdout)
+                if match:
+                    ping_time = int(match.group(1))
                 else:
-                    host = endpoint
-                    port = 51820
-                
-                # Test ping (simplified - just test if port is open)
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3)
-                
-                start_time = time.time()
-                result = sock.connect_ex((host, int(port)))
-                end_time = time.time()
-                
-                sock.close()
-                
-                if result == 0:
-                    ping_time = int((end_time - start_time) * 1000)
-                else:
-                    ping_time = -1  # Connection failed
-                
+                    ping_time = -1  # No reply
+
                 self.ping_result.emit(server['id'], ping_time)
-                
+
             except Exception:
                 self.ping_result.emit(server['id'], -1)
-            
-            time.sleep(0.5)  # Small delay between tests
-    
+
+            time.sleep(0.3)
+
+        # Emit full results when all servers tested
+        results = {}
+        for server in self.servers:
+            card_id = server['id']
+            results[card_id] = -1  # default
+        self.ping_complete.emit(results)
+
+
     def stop(self):
         """Stop ping testing"""
         self.running = False
@@ -177,13 +181,12 @@ class ServerCard(QFrame):
     def mousePressEvent(self, event):
         """Handle mouse click"""
         if event.button() == Qt.LeftButton:
-            self.select_server()
+            self.server_selected.emit(self.server)
     
     def select_server(self):
         """Select this server"""
         self.is_selected = True
         self.update_style()
-        self.server_selected.emit(self.server)
     
     def deselect(self):
         """Deselect this server"""
@@ -210,9 +213,11 @@ class ServerCard(QFrame):
 
 class ServerGrid(QWidget):
     """Grid of server cards"""
-    
-    server_selected = Signal(dict)
-    
+
+    server_selected   = Signal(dict)   # user clicked a server card
+    auto_connect_best = Signal(dict)   # emitted after ping scan: fastest server
+
+
     def __init__(self):
         super().__init__()
         self.logger = get_logger(__name__)
@@ -303,13 +308,40 @@ class ServerGrid(QWidget):
         """Start ping testing for all servers"""
         if not self.servers:
             return
-        
+
+        self._ping_results   = {}   # track results as they arrive
+        self._ping_remaining = len(self.servers)
+
         self.ping_thread = PingTestThread(self.servers)
         self.ping_thread.ping_result.connect(self.update_server_ping)
+        self.ping_thread.ping_complete.connect(self._on_ping_complete)
         self.ping_thread.start()
-        
+
         self.logger.info("Started ping testing for all servers")
-    
+
+    def _on_ping_complete(self, _results):
+        """Called when all pings finish — auto-select the fastest server."""
+        valid = {
+            sid: card.ping_time
+            for sid, card in self.server_cards.items()
+            if card.ping_time > 0
+        }
+        if not valid:
+            return
+
+        best_id = min(valid, key=valid.get)
+        best_server = next(
+            (s for s in self.servers if s['id'] == best_id), None
+        )
+        if best_server:
+            self.on_server_selected(best_server)   # highlight the card
+            self.logger.info(
+                f"Auto-selected fastest server: {best_server['name']} "
+                f"({valid[best_id]}ms)"
+            )
+            self.auto_connect_best.emit(best_server)
+
+
     def update_server_ping(self, server_id: str, ping_time: int):
         """Update ping time for a server"""
         card = self.server_cards.get(server_id)

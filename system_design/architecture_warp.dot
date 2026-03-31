@@ -1,0 +1,60 @@
+digraph OnamVPN_Architecture {
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif", shape=box, style="rounded,filled", fillcolor="#f8f9fa", color="#ced4da", penwidth=1.5]
+    edge [fontname="Helvetica,Arial,sans-serif", color="#6c757d", penwidth=1.5]
+    rankdir=LR;
+    splines=line;
+
+    subgraph cluster_laptop {
+        label = "User Laptop (Windows)";
+        style="rounded,dashed";
+        color="#0056b3";
+        bgcolor="#eef2f5";
+        fontname="Helvetica-Bold";
+        fontsize=14;
+
+        GUI [label="OnamVPN GUI\n(Python/PySide6)", fillcolor="#e0fbfc", color="#0077b6", shape=note];
+        VPN_Core [label="VPN Core Logic\n(real_windows_wireguard)", fillcolor="#e0fbfc", color="#0077b6"];
+        
+        subgraph cluster_security {
+            label = "Security Posture";
+            style="rounded,filled";
+            color="#ffe8cc";
+            bgcolor="#fff3e0";
+            fontname="Helvetica-Bold";
+
+            KS [label="Firewall Kill Switch\n(Blocks all non-VPN traffic)", fillcolor="#f08080", color="#c92a2a", fontcolor="#ffffff"];
+            DNS_LP [label="DNS Leak Protection\n(Blocks DNS except on wgcf-profile)", fillcolor="#f08080", color="#c92a2a", fontcolor="#ffffff"];
+        }
+
+        WG_TUN [label="WireGuard TUN Adapter\n(wgcf-profile)", shape=folder, fillcolor="#b2f2bb", color="#2b8a3e"];
+    }
+
+    subgraph cluster_cloudflare {
+        label = "Cloudflare Global Network (WARP)";
+        style="rounded,filled";
+        color="#ff922b";
+        bgcolor="#fff4e6";
+        fontname="Helvetica-Bold";
+        fontsize=14;
+
+        CF_Edge [label="Nearest Edge Node\n(e.g., 162.159.195.1)", fillcolor="#ffd8a8", color="#e8590c", shape=cylinder];
+        CF_DNS [label="Cloudflare DNS\n(1.1.1.1)", fillcolor="#ffd8a8", color="#e8590c", shape=ellipse];
+    }
+
+    Internet [label="Public Internet\n(Destinations)", shape=cloud, fillcolor="#f1f3f5", color="#adb5bd"];
+
+    // Relationships
+    GUI -> VPN_Core [label="User initiates connect"];
+    VPN_Core -> WG_TUN [label="Creates tunnel & injects wgcf config"];
+    VPN_Core -> KS [label="Enables"];
+    VPN_Core -> DNS_LP [label="Enables"];
+    
+    WG_TUN -> CF_Edge [label="Encrypted UDP (Port 2408)\nChaCha20-Poly1305", color="#2b8a3e", fontcolor="#2b8a3e", style=bold];
+    WG_TUN -> CF_DNS [label="Encrypted DNS queries"];
+    
+    CF_Edge -> Internet [label="Decrypted traffic", color="#e8590c", fontcolor="#e8590c"];
+    
+    // Prevent bypass
+    GUI -> Internet [style=invis];
+}

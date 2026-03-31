@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-LeAmitVPN - Local VPN with GUI
+OnamVPN - Local VPN with GUI
 Main entry point for the application
 
 Author: Addy
-Based on: LeAmitVPN architecture
+Based on: OnamVPN architecture
 """
 
 import sys
 import argparse
 import logging
+import ctypes
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
@@ -17,6 +18,34 @@ from PySide6.QtCore import Qt
 # Add project root to Python path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
+
+def _is_admin() -> bool:
+    """Return True if the process has Administrator privileges."""
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:
+        return False
+
+
+def _relaunch_as_admin():
+    """Re-launch this script with Administrator privileges via UAC prompt."""
+    # ShellExecuteW with verb='runas' triggers the UAC elevation dialog
+    params = " ".join(f'"{a}"' for a in sys.argv)
+    ctypes.windll.shell32.ShellExecuteW(
+        None, "runas", sys.executable, params, None, 1
+    )
+
+
+# ── Auto-elevation: WireGuard tunnel service management requires admin ─────────
+# If we're not already elevated, show the UAC dialog and relaunch, then exit.
+if not _is_admin():
+    print("OnamVPN needs Administrator rights to manage WireGuard tunnels.")
+    print("Requesting elevation via UAC...")
+    _relaunch_as_admin()
+    sys.exit(0)
+# ───────────────────────────────────────────────────────────────────────────────
+
 
 from gui.main_window import MainWindow
 from vpn_core.logger import setup_logger

@@ -1,5 +1,5 @@
 """
-Logging utilities for LeAmitVPN
+Logging utilities for OnamVPN
 """
 
 import logging

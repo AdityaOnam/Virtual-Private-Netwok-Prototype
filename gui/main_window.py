@@ -1,5 +1,5 @@
 """
-Main window for LeAmitVPN GUI
+Main window for OnamVPN GUI
 """
 
 import sys
@@ -23,21 +23,31 @@ class ConnectionMonitor(QThread):
     """Thread for monitoring connection status"""
     status_updated = Signal(dict)
     
+    # Poll interval constants (milliseconds)
+    POLL_INTERVAL_MS = 3000       # Normal poll: every 3 seconds
+    ERROR_RETRY_MS   = 10000      # After an error: wait 10 seconds before retry
+
     def __init__(self, vpn_handler):
         super().__init__()
         self.vpn_handler = vpn_handler
         self.running = True
+        self._error_count = 0
     
     def run(self):
         """Monitor connection status"""
         while self.running:
             try:
                 status = self.vpn_handler.get_connection_status()
+                self._error_count = 0          # Reset on success
                 self.status_updated.emit(status)
-                self.msleep(2000)  # Update every 2 seconds
+                self.msleep(self.POLL_INTERVAL_MS)
             except Exception as e:
-                print(f"Connection monitor error: {e}")
-                self.msleep(5000)
+                self._error_count += 1
+                # Log with count so the issue is visible, not silently retried
+                print(f"[ConnectionMonitor] status poll error #{self._error_count}: {e}")
+                # Back off longer after repeated failures to avoid hammering
+                backoff = min(self.ERROR_RETRY_MS * self._error_count, 60000)
+                self.msleep(backoff)
     
     def stop(self):
         """Stop monitoring"""
@@ -182,6 +192,8 @@ class MainWindow(QMainWindow):
         # Server grid
         self.server_grid = ServerGrid()
         self.server_grid.server_selected.connect(self.on_server_selected)
+        self.server_grid.auto_connect_best.connect(self.on_auto_connect_best)
+
         
         # Scroll area for servers
         scroll_area = QScrollArea()
@@ -472,7 +484,18 @@ class MainWindow(QMainWindow):
         self.connect_button.setEnabled(True)
         self.connection_info.setText(f"Selected: {server['name']} {server['flag']}")
         self.logger.info(f"Selected server: {server['name']}")
-    
+
+    def on_auto_connect_best(self, server):
+        """Auto-connect to the fastest server after ping scan completes."""
+        if self.vpn_handler.is_connected:
+            return  # Already connected — don't interrupt
+        self.logger.info(
+            f"Auto-connecting to fastest server: {server['name']} ({server['endpoint']})"
+        )
+        self.selected_server = server
+        self.connect_to_server()
+
+
     def connect_to_server(self):
         """Connect to selected server"""
         if not self.selected_server:
@@ -543,25 +566,44 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setVisible(False)
                 self.connect_button.setEnabled(False)
                 self.disconnect_button.setEnabled(True)
-                self.status_label.setText("Connected")
-                self.status_label.setStyleSheet("""
-                    QLabel {
-                        background-color: #27ae60;
+
+                # Determine real handshake state if available
+                handshake_ago = status.get('handshake_ago')
+                handshake_ok  = status.get('handshake_ok', False)
+
+                if handshake_ago is not None:
+                    if handshake_ok:
+                        label_text = f"✅ Connected  (handshake {handshake_ago}s ago)"
+                        bg_color   = "#27ae60"  # green
+                    else:
+                        label_text = f"⚠️ Tunnel up — handshake stale ({handshake_ago}s ago)"
+                        bg_color   = "#e67e22"  # orange — tunnel installed but no response
+                else:
+                    label_text = "Connected"
+                    bg_color   = "#27ae60"
+
+                self.status_label.setText(label_text)
+                self.status_label.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {bg_color};
                         color: white;
                         padding: 10px;
                         border-radius: 5px;
                         font-weight: bold;
-                    }
+                    }}
                 """)
-                
+
                 if status['server']:
                     server = status['server']
-                    self.connection_info.setText(f"Connected to {server['name']} {server['flag']}")
-                
+                    info = f"Connected to {server['name']} {server['flag']}"
+                    if handshake_ago is not None and not handshake_ok:
+                        info += " — keys may be mismatched, try reconnecting"
+                    self.connection_info.setText(info)
+
                 self.status_bar.showMessage("Connected to VPN")
                 if getattr(self, 'settings', {}).get("show_notifications", True) and hasattr(self, 'tray_icon'):
                     self.tray_icon.showMessage("OnamVPN", "Connected", QSystemTrayIcon.Information, 3000)
-                
+
             else:
                 self.progress_bar.setVisible(False)
                 self.connect_button.setEnabled(bool(self.selected_server))
@@ -576,14 +618,14 @@ class MainWindow(QMainWindow):
                         font-weight: bold;
                     }
                 """)
-                
+
                 if self.selected_server:
                     self.connection_info.setText(f"Ready to connect to {self.selected_server['name']}")
                 else:
                     self.connection_info.setText("Select a server to connect")
-                
+
                 self.status_bar.showMessage("Disconnected")
-                
+
         except Exception as e:
             self.logger.error(f"Status update error: {e}")
     

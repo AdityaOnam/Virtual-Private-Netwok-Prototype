@@ -1,5 +1,5 @@
 """
-WireGuard integration for LeAmitVPN
+WireGuard integration for OnamVPN
 Handles VPN connection, disconnection, and management
 """
 
@@ -43,7 +43,7 @@ class WireGuardHandler:
             self._create_default_servers()
             
         try:
-            with open(servers_file, 'r') as f:
+            with open(servers_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get('servers', [])
         except Exception as e:
@@ -359,7 +359,12 @@ PersistentKeepalive = 25
             # Generate server keys
             private_key, public_key = self.generate_keys()
             # Create server configuration
-            server_config = f"""[Interface]\nPrivateKey = {private_key}\nAddress = 10.0.0.1/24\nListenPort = {port}\nPostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\nPostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE\n\n[Peer]\nPublicKey = {public_key}\nAllowedIPs = 10.0.0.2/32\n"""
+            # ----------------------------------------------------------------
+            # KEY EXCHANGE NOTE: [Peer].PublicKey must be the CLIENT'S key,
+            # not the server's own key.  Fill in REPLACE_WITH_CLIENT_PUBLIC_KEY
+            # after the client generates its key pair and shares its public key.
+            # ----------------------------------------------------------------
+            server_config = f"""[Interface]\nPrivateKey = {private_key}\nAddress = 10.0.0.1/24\nListenPort = {port}\nPostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\nPostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE\n\n[Peer]\n# Replace with the client's public key (NOT the server's own key)\nPublicKey = REPLACE_WITH_CLIENT_PUBLIC_KEY\nAllowedIPs = 10.0.0.2/32\n"""
             # Save server configuration
             server_config_file = self.config_dir / "server.conf"
             with open(server_config_file, 'w') as f:

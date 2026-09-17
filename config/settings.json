@@ -12,7 +12,7 @@
   "killswitch": true,
   "dns_leak_protection": true,
   "log_level": "DEBUG",
-  "log_to_file": false,
+  "log_to_file": true,
   "mtu_size": 1420,
   "thread_count": 2
 }

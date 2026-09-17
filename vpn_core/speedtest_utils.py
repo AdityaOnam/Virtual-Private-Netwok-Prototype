@@ -161,25 +161,51 @@ class SpeedTestManager:
     def _load_servers(self) -> List[Dict]:
         """Load servers from configuration file"""
         try:
-            with open(self.servers_file, 'r') as f:
+            with open(self.servers_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get('servers', [])
         except Exception as e:
             self.logger.error(f"Failed to load servers: {e}")
             return []
     
-    def test_all_servers(self, max_workers: int = 5) -> Dict[str, Dict]:
+    @staticmethod
+    def _configured_worker_count(default: int = 5) -> int:
+        """
+        Read `thread_count` from config/settings.json.
+
+        The Settings dialog has always written this value and nothing ever
+        read it.  It now sets the pool size for the latency scan, which is the
+        one place in the app where it makes an observable difference: probing
+        servers is I/O-bound, so the threads genuinely overlap.  See
+        oslab.concurrency.pool.compare_workload_scaling for the measurement
+        showing why the same setting would not help CPU-bound work.
+        """
+        settings_file = Path("config") / "settings.json"
+        if not settings_file.exists():
+            return default
+        try:
+            with open(settings_file, "r", encoding="utf-8") as handle:
+                value = int((json.load(handle) or {}).get("thread_count", default))
+            return max(1, min(32, value))
+        except Exception:
+            return default
+
+    def test_all_servers(self, max_workers: int | None = None) -> Dict[str, Dict]:
         """
         Test ping for all servers concurrently
-        
+
         Args:
-            max_workers (int): Maximum number of concurrent tests
+            max_workers (int | None): Concurrent probes.  None reads
+                `thread_count` from config/settings.json.
             
         Returns:
             Dict[str, Dict]: Results for each server
         """
         results = {}
-        
+
+        if max_workers is None:
+            max_workers = self._configured_worker_count()
+
         if not self.servers:
             self.logger.warning("No servers available for testing")
             return results

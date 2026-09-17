@@ -1,0 +1,1652 @@
+{
+  "link_type": 1,
+  "packets": [
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "real_ethertype": {
+              "bit_length": 16,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "EtherType after 802.1Q tag: IPv4. Identifies the next layer protocol.",
+              "is_bad": false,
+              "raw_bytes": "08 00",
+              "value": 2048
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            },
+            "vlan_tci": {
+              "bit_length": 16,
+              "bit_offset": 112,
+              "computed_value": null,
+              "description": "VLAN Tag Control Info: PCP=3 DEI=0 VID=100 (VLAN 100). Priority Code Point sets QoS; VLAN ID isolates broadcast domains on the same physical switch.",
+              "is_bad": false,
+              "raw_bytes": "60 64",
+              "value": 24676
+            },
+            "vlan_tpid": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "VLAN Tag Protocol Identifier (0x8100 = 802.1Q). Signals that a 4-byte VLAN tag follows.",
+              "is_bad": false,
+              "raw_bytes": "81 00",
+              "value": 33024
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 18,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 81 00 60 64 08 00"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 80,
+              "computed_value": 28322,
+              "description": "Header checksum: received=0x6EA2, computed=0x6EA2. One's-complement sum of the IP header only (not payload).",
+              "is_bad": false,
+              "raw_bytes": "6e a2",
+              "value": 28322
+            },
+            "df_flag": {
+              "bit_length": 1,
+              "bit_offset": 49,
+              "computed_value": null,
+              "description": "DF=clear. When DF=1 and the packet is too large, the router drops it and sends ICMP Fragmentation Needed. Path MTU Discovery relies on this.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dscp": {
+              "bit_length": 6,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "DSCP: CS0 (Best Effort). QoS traffic class.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dst": {
+              "bit_length": 32,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "Destination IP: 1.1.1.1.",
+              "is_bad": false,
+              "raw_bytes": "01 01 01 01",
+              "value": "1.1.1.1"
+            },
+            "ecn": {
+              "bit_length": 2,
+              "bit_offset": 14,
+              "computed_value": null,
+              "description": "ECN: Not-ECT. End-to-end congestion signalling.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "frag_offset": {
+              "bit_length": 13,
+              "bit_offset": 51,
+              "computed_value": null,
+              "description": "Fragment offset: 0\u00d78 = 0 B into original payload. 8-byte granularity means all non-last fragments must be multiples of 8.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "identification": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Identification: 0x0001. Fragments of the same datagram share this value for reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 01",
+              "value": 1
+            },
+            "ihl": {
+              "bit_length": 4,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Internet Header Length: 5\u00d732-bit words = 20 B. IHL > 5 means options are present; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 5
+            },
+            "mf_flag": {
+              "bit_length": 1,
+              "bit_offset": 50,
+              "computed_value": null,
+              "description": "MF=clear (last fragment).",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "protocol": {
+              "bit_length": 8,
+              "bit_offset": 72,
+              "computed_value": null,
+              "description": "Protocol: 17 = UDP. Layer-3 demux: tells the receiver which transport to hand the payload to.",
+              "is_bad": false,
+              "raw_bytes": "11",
+              "value": 17
+            },
+            "reserved_flag": {
+              "bit_length": 1,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Reserved flag: RFC 791 requires this bit to be zero. (RFC 3514 jokingly redefines it as the 'Evil Bit' \u2014 an April Fools' RFC, not a real protocol feature.)",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "src": {
+              "bit_length": 32,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Source IP: 10.0.0.5.",
+              "is_bad": false,
+              "raw_bytes": "0a 00 00 05",
+              "value": "10.0.0.5"
+            },
+            "total_length": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Total length: 68 B (header 20 + payload 48). Datagrams larger than the link MTU must be fragmented.",
+              "is_bad": false,
+              "raw_bytes": "00 44",
+              "value": 68
+            },
+            "ttl": {
+              "bit_length": 8,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "TTL: 64. Decremented by each router; when 0 the packet is discarded (ICMP Time Exceeded, type 11). Traceroute uses TTL=1,2,\u2026",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 4 = IPv4.  Upper nibble of byte 0.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 4
+            }
+          },
+          "name": "IPv4",
+          "notes": {
+            "is_first_fragment": true,
+            "is_fragmented": false
+          },
+          "payload_offset": 20,
+          "raw_bytes": "45 00 00 44 00 01 00 00 40 11 6e a2 0a 00 00 05 01 01 01 01"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 48,
+              "computed_value": 22220,
+              "description": "Checksum: received=0x56CC, computed=0x56CC. Covers UDP header + data + pseudo-header.",
+              "is_bad": false,
+              "raw_bytes": "56 cc",
+              "value": 22220
+            },
+            "dst_port": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Destination port: 123 (NTP). Demultiplexes the datagram to the correct application socket.",
+              "is_bad": false,
+              "raw_bytes": "00 7b",
+              "value": 123
+            },
+            "length": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "UDP length: 48 B (header 8 + payload 40 B). Unlike TCP, UDP delivers whole datagrams \u2014 no stream reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 30",
+              "value": 48
+            },
+            "src_port": {
+              "bit_length": 16,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Source port: 40000.",
+              "is_bad": false,
+              "raw_bytes": "9c 40",
+              "value": 40000
+            }
+          },
+          "name": "UDP",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "9c 40 00 7b 00 30 56 cc"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 81 00 60 64 08 00 45 00 00 44 00 01 00 00 40 11 6e a2 0a 00 00 05 01 01 01 01 9c 40 00 7b 00 30 56 cc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "timestamp": 1700000000.0
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv4. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "08 00",
+              "value": 2048
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 80,
+              "computed_value": 24764,
+              "description": "Header checksum: received=0x60BC, computed=0x60BC. One's-complement sum of the IP header only (not payload).",
+              "is_bad": false,
+              "raw_bytes": "60 bc",
+              "value": 24764
+            },
+            "df_flag": {
+              "bit_length": 1,
+              "bit_offset": 49,
+              "computed_value": null,
+              "description": "DF=clear. When DF=1 and the packet is too large, the router drops it and sends ICMP Fragmentation Needed. Path MTU Discovery relies on this.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dscp": {
+              "bit_length": 6,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "DSCP: CS0 (Best Effort). QoS traffic class.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dst": {
+              "bit_length": 32,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "Destination IP: 8.8.8.8.",
+              "is_bad": false,
+              "raw_bytes": "08 08 08 08",
+              "value": "8.8.8.8"
+            },
+            "ecn": {
+              "bit_length": 2,
+              "bit_offset": 14,
+              "computed_value": null,
+              "description": "ECN: Not-ECT. End-to-end congestion signalling.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "frag_offset": {
+              "bit_length": 13,
+              "bit_offset": 51,
+              "computed_value": null,
+              "description": "Fragment offset: 0\u00d78 = 0 B into original payload. 8-byte granularity means all non-last fragments must be multiples of 8.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "identification": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Identification: 0x0001. Fragments of the same datagram share this value for reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 01",
+              "value": 1
+            },
+            "ihl": {
+              "bit_length": 4,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Internet Header Length: 5\u00d732-bit words = 20 B. IHL > 5 means options are present; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 5
+            },
+            "mf_flag": {
+              "bit_length": 1,
+              "bit_offset": 50,
+              "computed_value": null,
+              "description": "MF=clear (last fragment).",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "protocol": {
+              "bit_length": 8,
+              "bit_offset": 72,
+              "computed_value": null,
+              "description": "Protocol: 1 = ICMP. Layer-3 demux: tells the receiver which transport to hand the payload to.",
+              "is_bad": false,
+              "raw_bytes": "01",
+              "value": 1
+            },
+            "reserved_flag": {
+              "bit_length": 1,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Reserved flag: RFC 791 requires this bit to be zero. (RFC 3514 jokingly redefines it as the 'Evil Bit' \u2014 an April Fools' RFC, not a real protocol feature.)",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "src": {
+              "bit_length": 32,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Source IP: 10.0.0.5.",
+              "is_bad": false,
+              "raw_bytes": "0a 00 00 05",
+              "value": "10.0.0.5"
+            },
+            "total_length": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Total length: 44 B (header 20 + payload 24). Datagrams larger than the link MTU must be fragmented.",
+              "is_bad": false,
+              "raw_bytes": "00 2c",
+              "value": 44
+            },
+            "ttl": {
+              "bit_length": 8,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "TTL: 64. Decremented by each router; when 0 the packet is discarded (ICMP Time Exceeded, type 11). Traceroute uses TTL=1,2,\u2026",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 4 = IPv4.  Upper nibble of byte 0.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 4
+            }
+          },
+          "name": "IPv4",
+          "notes": {
+            "is_first_fragment": true,
+            "is_fragmented": false
+          },
+          "payload_offset": 20,
+          "raw_bytes": "45 00 00 2c 00 01 00 00 40 01 60 bc 0a 00 00 05 08 08 08 08"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": 41599,
+              "description": "Checksum: received=0xA27F, computed=0xA27F. Covers entire ICMP message.",
+              "is_bad": false,
+              "raw_bytes": "a2 7f",
+              "value": 41599
+            },
+            "code": {
+              "bit_length": 8,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "Code: 0 = code 0. Sub-type within the message category.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "rest_of_header": {
+              "bit_length": 32,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Echo identifier=4660, sequence=1. Ping uses this to match replies to requests.",
+              "is_bad": false,
+              "raw_bytes": "12 34 00 01",
+              "value": {
+                "identifier": 4660,
+                "sequence": 1
+              }
+            },
+            "type": {
+              "bit_length": 8,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Type: 8 = Echo Request. Identifies the ICMP message category.",
+              "is_bad": false,
+              "raw_bytes": "08",
+              "value": 8
+            }
+          },
+          "name": "ICMP",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "08 00 a2 7f 12 34 00 01"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00 45 00 00 2c 00 01 00 00 40 01 60 bc 0a 00 00 05 08 08 08 08 08 00 a2 7f 12 34 00 01 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70",
+      "timestamp": 1700000001.001
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv4. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "08 00",
+              "value": 2048
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 80,
+              "computed_value": 24764,
+              "description": "Header checksum: received=0x60BC, computed=0x60BC. One's-complement sum of the IP header only (not payload).",
+              "is_bad": false,
+              "raw_bytes": "60 bc",
+              "value": 24764
+            },
+            "df_flag": {
+              "bit_length": 1,
+              "bit_offset": 49,
+              "computed_value": null,
+              "description": "DF=clear. When DF=1 and the packet is too large, the router drops it and sends ICMP Fragmentation Needed. Path MTU Discovery relies on this.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dscp": {
+              "bit_length": 6,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "DSCP: CS0 (Best Effort). QoS traffic class.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dst": {
+              "bit_length": 32,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "Destination IP: 10.0.0.5.",
+              "is_bad": false,
+              "raw_bytes": "0a 00 00 05",
+              "value": "10.0.0.5"
+            },
+            "ecn": {
+              "bit_length": 2,
+              "bit_offset": 14,
+              "computed_value": null,
+              "description": "ECN: Not-ECT. End-to-end congestion signalling.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "frag_offset": {
+              "bit_length": 13,
+              "bit_offset": 51,
+              "computed_value": null,
+              "description": "Fragment offset: 0\u00d78 = 0 B into original payload. 8-byte granularity means all non-last fragments must be multiples of 8.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "identification": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Identification: 0x0001. Fragments of the same datagram share this value for reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 01",
+              "value": 1
+            },
+            "ihl": {
+              "bit_length": 4,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Internet Header Length: 5\u00d732-bit words = 20 B. IHL > 5 means options are present; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 5
+            },
+            "mf_flag": {
+              "bit_length": 1,
+              "bit_offset": 50,
+              "computed_value": null,
+              "description": "MF=clear (last fragment).",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "protocol": {
+              "bit_length": 8,
+              "bit_offset": 72,
+              "computed_value": null,
+              "description": "Protocol: 1 = ICMP. Layer-3 demux: tells the receiver which transport to hand the payload to.",
+              "is_bad": false,
+              "raw_bytes": "01",
+              "value": 1
+            },
+            "reserved_flag": {
+              "bit_length": 1,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Reserved flag: RFC 791 requires this bit to be zero. (RFC 3514 jokingly redefines it as the 'Evil Bit' \u2014 an April Fools' RFC, not a real protocol feature.)",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "src": {
+              "bit_length": 32,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Source IP: 8.8.8.8.",
+              "is_bad": false,
+              "raw_bytes": "08 08 08 08",
+              "value": "8.8.8.8"
+            },
+            "total_length": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Total length: 44 B (header 20 + payload 24). Datagrams larger than the link MTU must be fragmented.",
+              "is_bad": false,
+              "raw_bytes": "00 2c",
+              "value": 44
+            },
+            "ttl": {
+              "bit_length": 8,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "TTL: 64. Decremented by each router; when 0 the packet is discarded (ICMP Time Exceeded, type 11). Traceroute uses TTL=1,2,\u2026",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 4 = IPv4.  Upper nibble of byte 0.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 4
+            }
+          },
+          "name": "IPv4",
+          "notes": {
+            "is_first_fragment": true,
+            "is_fragmented": false
+          },
+          "payload_offset": 20,
+          "raw_bytes": "45 00 00 2c 00 01 00 00 40 01 60 bc 08 08 08 08 0a 00 00 05"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": 43647,
+              "description": "Checksum: received=0xAA7F, computed=0xAA7F. Covers entire ICMP message.",
+              "is_bad": false,
+              "raw_bytes": "aa 7f",
+              "value": 43647
+            },
+            "code": {
+              "bit_length": 8,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "Code: 0 = code 0. Sub-type within the message category.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "rest_of_header": {
+              "bit_length": 32,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Echo identifier=4660, sequence=1. Ping uses this to match replies to requests.",
+              "is_bad": false,
+              "raw_bytes": "12 34 00 01",
+              "value": {
+                "identifier": 4660,
+                "sequence": 1
+              }
+            },
+            "type": {
+              "bit_length": 8,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Type: 0 = Echo Reply. Identifies the ICMP message category.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            }
+          },
+          "name": "ICMP",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "00 00 aa 7f 12 34 00 01"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00 45 00 00 2c 00 01 00 00 40 01 60 bc 08 08 08 08 0a 00 00 05 00 00 aa 7f 12 34 00 01 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70",
+      "timestamp": 1700000002.002
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv4. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "08 00",
+              "value": 2048
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 80,
+              "computed_value": 13502,
+              "description": "Header checksum: received=0x34BE, computed=0x34BE. One's-complement sum of the IP header only (not payload).",
+              "is_bad": false,
+              "raw_bytes": "34 be",
+              "value": 13502
+            },
+            "df_flag": {
+              "bit_length": 1,
+              "bit_offset": 49,
+              "computed_value": null,
+              "description": "DF=clear. When DF=1 and the packet is too large, the router drops it and sends ICMP Fragmentation Needed. Path MTU Discovery relies on this.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dscp": {
+              "bit_length": 6,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "DSCP: CS0 (Best Effort). QoS traffic class.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dst": {
+              "bit_length": 32,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "Destination IP: 10.0.0.5.",
+              "is_bad": false,
+              "raw_bytes": "0a 00 00 05",
+              "value": "10.0.0.5"
+            },
+            "ecn": {
+              "bit_length": 2,
+              "bit_offset": 14,
+              "computed_value": null,
+              "description": "ECN: Not-ECT. End-to-end congestion signalling.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "frag_offset": {
+              "bit_length": 13,
+              "bit_offset": 51,
+              "computed_value": null,
+              "description": "Fragment offset: 0\u00d78 = 0 B into original payload. 8-byte granularity means all non-last fragments must be multiples of 8.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "identification": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Identification: 0x0001. Fragments of the same datagram share this value for reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 01",
+              "value": 1
+            },
+            "ihl": {
+              "bit_length": 4,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Internet Header Length: 5\u00d732-bit words = 20 B. IHL > 5 means options are present; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 5
+            },
+            "mf_flag": {
+              "bit_length": 1,
+              "bit_offset": 50,
+              "computed_value": null,
+              "description": "MF=clear (last fragment).",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "protocol": {
+              "bit_length": 8,
+              "bit_offset": 72,
+              "computed_value": null,
+              "description": "Protocol: 1 = ICMP. Layer-3 demux: tells the receiver which transport to hand the payload to.",
+              "is_bad": false,
+              "raw_bytes": "01",
+              "value": 1
+            },
+            "reserved_flag": {
+              "bit_length": 1,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Reserved flag: RFC 791 requires this bit to be zero. (RFC 3514 jokingly redefines it as the 'Evil Bit' \u2014 an April Fools' RFC, not a real protocol feature.)",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "src": {
+              "bit_length": 32,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Source IP: 203.0.113.1.",
+              "is_bad": false,
+              "raw_bytes": "cb 00 71 01",
+              "value": "203.0.113.1"
+            },
+            "total_length": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Total length: 56 B (header 20 + payload 36). Datagrams larger than the link MTU must be fragmented.",
+              "is_bad": false,
+              "raw_bytes": "00 38",
+              "value": 56
+            },
+            "ttl": {
+              "bit_length": 8,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "TTL: 64. Decremented by each router; when 0 the packet is discarded (ICMP Time Exceeded, type 11). Traceroute uses TTL=1,2,\u2026",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 4 = IPv4.  Upper nibble of byte 0.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 4
+            }
+          },
+          "name": "IPv4",
+          "notes": {
+            "is_first_fragment": true,
+            "is_fragmented": false
+          },
+          "payload_offset": 20,
+          "raw_bytes": "45 00 00 38 00 01 00 00 40 01 34 be cb 00 71 01 0a 00 00 05"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": 62719,
+              "description": "Checksum: received=0xF4FF, computed=0xF4FF. Covers entire ICMP message.",
+              "is_bad": false,
+              "raw_bytes": "f4 ff",
+              "value": 62719
+            },
+            "code": {
+              "bit_length": 8,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "Code: 0 = TTL Exceeded in Transit. Sub-type within the message category.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "rest_of_header": {
+              "bit_length": 32,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Unused (4 bytes, must be zero). TTL=0 triggers this; traceroute uses TTL=1,2,\u2026 to map hops.",
+              "is_bad": false,
+              "raw_bytes": "00 00 00 00",
+              "value": {}
+            },
+            "type": {
+              "bit_length": 8,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Type: 11 = Time Exceeded. Identifies the ICMP message category.",
+              "is_bad": false,
+              "raw_bytes": "0b",
+              "value": 11
+            }
+          },
+          "name": "ICMP",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "0b 00 f4 ff 00 00 00 00"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00 45 00 00 38 00 01 00 00 40 01 34 be cb 00 71 01 0a 00 00 05 0b 00 f4 ff 00 00 00 00 45 00 00 1c 00 01 00 00 01 01 9f cc 0a 00 00 05 08 08 08 08 08 00 f7 ff 00 00 00 00",
+      "timestamp": 1700000003.003
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv6. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "86 dd",
+              "value": 34525
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 86 dd"
+        },
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 128,
+              "bit_offset": 192,
+              "computed_value": null,
+              "description": "Destination IPv6 address: 2606:4700:4700::1111.",
+              "is_bad": false,
+              "raw_bytes": "26 06 47 00 47 00 00 00 00 00 00 00 00 00 11 11",
+              "value": "2606:4700:4700::1111"
+            },
+            "flow_label": {
+              "bit_length": 20,
+              "bit_offset": 12,
+              "computed_value": null,
+              "description": "Flow Label: 0x00000. A non-zero value marks this packet as part of a flow for which the sender requests special handling (e.g. per-flow load balancing).",
+              "is_bad": false,
+              "raw_bytes": "00 00 00",
+              "value": 0
+            },
+            "hop_limit": {
+              "bit_length": 8,
+              "bit_offset": 56,
+              "computed_value": null,
+              "description": "Hop Limit: 64. IPv6 rename of IPv4 TTL. Decremented by each router; packet dropped at 0.",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "next_header": {
+              "bit_length": 8,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Next Header: 6 = TCP. Plays the same role as IPv4 Protocol \u2014 identifies the next layer (or the first extension header).",
+              "is_bad": false,
+              "raw_bytes": "06",
+              "value": 6
+            },
+            "payload_length": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Payload Length: 20 B (everything after the 40-byte fixed header, including any extension headers).  Unlike IPv4 Total Length, this does NOT include the fixed header itself.",
+              "is_bad": false,
+              "raw_bytes": "00 14",
+              "value": 20
+            },
+            "src": {
+              "bit_length": 128,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "Source IPv6 address: 2001:db8::5.",
+              "is_bad": false,
+              "raw_bytes": "20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05",
+              "value": "2001:db8::5"
+            },
+            "traffic_class": {
+              "bit_length": 8,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Traffic Class: 0x00 (DSCP=CS0 (Best Effort), ECN=Not-ECT). Replaces the IPv4 TOS byte; upper 6 bits = DSCP, lower 2 = ECN.",
+              "is_bad": false,
+              "raw_bytes": "60 00",
+              "value": 0
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 6 = IPv6.  Upper nibble of the first 32-bit word.",
+              "is_bad": false,
+              "raw_bytes": "60",
+              "value": 6
+            }
+          },
+          "name": "IPv6",
+          "notes": {},
+          "payload_offset": 40,
+          "raw_bytes": "60 00 00 00 00 14 06 40 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05 26 06 47 00 47 00 00 00 00 00 00 00 00 00 11 11"
+        },
+        {
+          "fields": {
+            "ack": {
+              "bit_length": 32,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "Acknowledgment number: 0. Valid only when ACK flag is set; equals the next byte the sender expects from the peer (cumulative ACK).",
+              "is_bad": false,
+              "raw_bytes": "00 00 00 00",
+              "value": 0
+            },
+            "ack_flag": {
+              "bit_length": 1,
+              "bit_offset": 107,
+              "computed_value": null,
+              "description": "ACK: Acknowledgment field is valid. Set in all segments after the initial SYN.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 128,
+              "computed_value": 55297,
+              "description": "Checksum: received=0xD801, computed=0xD801. Covers TCP header + data + pseudo-header (src/dst IP, protocol=6, TCP length).",
+              "is_bad": false,
+              "raw_bytes": "d8 01",
+              "value": 55297
+            },
+            "cwr": {
+              "bit_length": 1,
+              "bit_offset": 104,
+              "computed_value": null,
+              "description": "CWR: Congestion Window Reduced.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "data_offset": {
+              "bit_length": 4,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Data offset: 5\u00d732-bit words = 20 B. Length of the TCP header; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "50",
+              "value": 5
+            },
+            "dst_port": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Destination port: 443 (HTTPS). Identifies the service (demux at Layer 4).",
+              "is_bad": false,
+              "raw_bytes": "01 bb",
+              "value": 443
+            },
+            "ece": {
+              "bit_length": 1,
+              "bit_offset": 105,
+              "computed_value": null,
+              "description": "ECE: ECN-Echo.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "fin": {
+              "bit_length": 1,
+              "bit_offset": 111,
+              "computed_value": null,
+              "description": "FIN: No more data from sender; initiates connection teardown.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "ns": {
+              "bit_length": 1,
+              "bit_offset": 103,
+              "computed_value": null,
+              "description": "NS (Nonce Sum, ECN-related).",
+              "is_bad": false,
+              "raw_bytes": "50",
+              "value": 0
+            },
+            "psh": {
+              "bit_length": 1,
+              "bit_offset": 108,
+              "computed_value": null,
+              "description": "PSH: Push \u2014 receiver should pass buffered data to the application immediately rather than wait for more.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "reserved": {
+              "bit_length": 3,
+              "bit_offset": 100,
+              "computed_value": null,
+              "description": "Reserved (3 bits): must be zero.",
+              "is_bad": false,
+              "raw_bytes": "50",
+              "value": 0
+            },
+            "rst": {
+              "bit_length": 1,
+              "bit_offset": 109,
+              "computed_value": null,
+              "description": "RST: Reset \u2014 abort the connection.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "seq": {
+              "bit_length": 32,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Sequence number: 0. Labels the first byte of this segment's data in the byte stream; SYN segments consume one sequence number.",
+              "is_bad": false,
+              "raw_bytes": "00 00 00 00",
+              "value": 0
+            },
+            "src_port": {
+              "bit_length": 16,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Source port: 50000. Ephemeral port chosen by the OS for this connection.",
+              "is_bad": false,
+              "raw_bytes": "c3 50",
+              "value": 50000
+            },
+            "syn": {
+              "bit_length": 1,
+              "bit_offset": 110,
+              "computed_value": null,
+              "description": "SYN: Synchronise sequence numbers. Set only in the first two segments of the three-way handshake.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 1
+            },
+            "urg": {
+              "bit_length": 1,
+              "bit_offset": 106,
+              "computed_value": null,
+              "description": "URG: Urgent Pointer is valid.",
+              "is_bad": false,
+              "raw_bytes": "02",
+              "value": 0
+            },
+            "urg_ptr": {
+              "bit_length": 16,
+              "bit_offset": 144,
+              "computed_value": null,
+              "description": "Urgent pointer: 0. Valid only when URG is set; points to the last urgent byte.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "window": {
+              "bit_length": 16,
+              "bit_offset": 112,
+              "computed_value": null,
+              "description": "Receive window: 8192 B. Flow control: the sender may not send more than this many unacknowledged bytes at a time.",
+              "is_bad": false,
+              "raw_bytes": "20 00",
+              "value": 8192
+            }
+          },
+          "name": "TCP",
+          "notes": {},
+          "payload_offset": 20,
+          "raw_bytes": "c3 50 01 bb 00 00 00 00 00 00 00 00 50 02 20 00 d8 01 00 00"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 86 dd 60 00 00 00 00 14 06 40 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05 26 06 47 00 47 00 00 00 00 00 00 00 00 00 11 11 c3 50 01 bb 00 00 00 00 00 00 00 00 50 02 20 00 d8 01 00 00",
+      "timestamp": 1700000004.004
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv6. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "86 dd",
+              "value": 34525
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 86 dd"
+        },
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 128,
+              "bit_offset": 192,
+              "computed_value": null,
+              "description": "Destination IPv6 address: 2001:db8::1.",
+              "is_bad": false,
+              "raw_bytes": "20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01",
+              "value": "2001:db8::1"
+            },
+            "flow_label": {
+              "bit_length": 20,
+              "bit_offset": 12,
+              "computed_value": null,
+              "description": "Flow Label: 0x00000. A non-zero value marks this packet as part of a flow for which the sender requests special handling (e.g. per-flow load balancing).",
+              "is_bad": false,
+              "raw_bytes": "00 00 00",
+              "value": 0
+            },
+            "hop_limit": {
+              "bit_length": 8,
+              "bit_offset": 56,
+              "computed_value": null,
+              "description": "Hop Limit: 64. IPv6 rename of IPv4 TTL. Decremented by each router; packet dropped at 0.",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "next_header": {
+              "bit_length": 8,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Next Header: 58 = ICMPv6. Plays the same role as IPv4 Protocol \u2014 identifies the next layer (or the first extension header).",
+              "is_bad": false,
+              "raw_bytes": "3a",
+              "value": 58
+            },
+            "payload_length": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Payload Length: 8 B (everything after the 40-byte fixed header, including any extension headers).  Unlike IPv4 Total Length, this does NOT include the fixed header itself.",
+              "is_bad": false,
+              "raw_bytes": "00 08",
+              "value": 8
+            },
+            "src": {
+              "bit_length": 128,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "Source IPv6 address: 2001:db8::5.",
+              "is_bad": false,
+              "raw_bytes": "20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05",
+              "value": "2001:db8::5"
+            },
+            "traffic_class": {
+              "bit_length": 8,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Traffic Class: 0x00 (DSCP=CS0 (Best Effort), ECN=Not-ECT). Replaces the IPv4 TOS byte; upper 6 bits = DSCP, lower 2 = ECN.",
+              "is_bad": false,
+              "raw_bytes": "60 00",
+              "value": 0
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 6 = IPv6.  Upper nibble of the first 32-bit word.",
+              "is_bad": false,
+              "raw_bytes": "60",
+              "value": 6
+            }
+          },
+          "name": "IPv6",
+          "notes": {},
+          "payload_offset": 40,
+          "raw_bytes": "60 00 00 00 00 08 3a 40 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": 9277,
+              "description": "Checksum: received=0x243D, computed=0x243D. Covers ICMPv6 message + IPv6 pseudo-header.",
+              "is_bad": false,
+              "raw_bytes": "24 3d",
+              "value": 9277
+            },
+            "code": {
+              "bit_length": 8,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "Code: 0 = code 0. Sub-type within the message category.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "rest_of_header": {
+              "bit_length": 32,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Echo identifier=7, sequence=1.",
+              "is_bad": false,
+              "raw_bytes": "00 07 00 01",
+              "value": {
+                "identifier": 7,
+                "sequence": 1
+              }
+            },
+            "type": {
+              "bit_length": 8,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Type: 128 = Echo Request. Identifies the ICMP message category.",
+              "is_bad": false,
+              "raw_bytes": "80",
+              "value": 128
+            }
+          },
+          "name": "ICMPv6",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "80 00 24 3d 00 07 00 01"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 86 dd 60 00 00 00 00 08 3a 40 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 05 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 80 00 24 3d 00 07 00 01",
+      "timestamp": 1700000005.005
+    },
+    {
+      "capture_source": "03_mixed_protocols.pcap",
+      "layers": [
+        {
+          "fields": {
+            "dst": {
+              "bit_length": 48,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Destination MAC address: the link-layer address of the intended recipient on this LAN segment.",
+              "is_bad": false,
+              "raw_bytes": "00 1a 2b 3c 4d 5e",
+              "value": "00:1a:2b:3c:4d:5e"
+            },
+            "ethertype": {
+              "bit_length": 16,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "EtherType: IPv4. Identifies the network-layer protocol carried by this frame (IPv4=0x0800, IPv6=0x86DD, ARP=0x0806).",
+              "is_bad": false,
+              "raw_bytes": "08 00",
+              "value": 2048
+            },
+            "src": {
+              "bit_length": 48,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Source MAC address: the link-layer address of the sender.",
+              "is_bad": false,
+              "raw_bytes": "aa bb cc 00 11 22",
+              "value": "aa:bb:cc:00:11:22"
+            }
+          },
+          "name": "Ethernet II",
+          "notes": {},
+          "payload_offset": 14,
+          "raw_bytes": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 80,
+              "computed_value": 3499,
+              "description": "Header checksum: received=0x0DAB, computed=0x0DAB. One's-complement sum of the IP header only (not payload).",
+              "is_bad": false,
+              "raw_bytes": "0d ab",
+              "value": 3499
+            },
+            "df_flag": {
+              "bit_length": 1,
+              "bit_offset": 49,
+              "computed_value": null,
+              "description": "DF=clear. When DF=1 and the packet is too large, the router drops it and sends ICMP Fragmentation Needed. Path MTU Discovery relies on this.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dscp": {
+              "bit_length": 6,
+              "bit_offset": 8,
+              "computed_value": null,
+              "description": "DSCP: CS0 (Best Effort). QoS traffic class.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "dst": {
+              "bit_length": 32,
+              "bit_offset": 128,
+              "computed_value": null,
+              "description": "Destination IP: 162.159.192.1.",
+              "is_bad": false,
+              "raw_bytes": "a2 9f c0 01",
+              "value": "162.159.192.1"
+            },
+            "ecn": {
+              "bit_length": 2,
+              "bit_offset": 14,
+              "computed_value": null,
+              "description": "ECN: Not-ECT. End-to-end congestion signalling.",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "frag_offset": {
+              "bit_length": 13,
+              "bit_offset": 51,
+              "computed_value": null,
+              "description": "Fragment offset: 0\u00d78 = 0 B into original payload. 8-byte granularity means all non-last fragments must be multiples of 8.",
+              "is_bad": false,
+              "raw_bytes": "00 00",
+              "value": 0
+            },
+            "identification": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "Identification: 0x0001. Fragments of the same datagram share this value for reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 01",
+              "value": 1
+            },
+            "ihl": {
+              "bit_length": 4,
+              "bit_offset": 4,
+              "computed_value": null,
+              "description": "Internet Header Length: 5\u00d732-bit words = 20 B. IHL > 5 means options are present; payload starts at byte 20.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 5
+            },
+            "mf_flag": {
+              "bit_length": 1,
+              "bit_offset": 50,
+              "computed_value": null,
+              "description": "MF=clear (last fragment).",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "protocol": {
+              "bit_length": 8,
+              "bit_offset": 72,
+              "computed_value": null,
+              "description": "Protocol: 17 = UDP. Layer-3 demux: tells the receiver which transport to hand the payload to.",
+              "is_bad": false,
+              "raw_bytes": "11",
+              "value": 17
+            },
+            "reserved_flag": {
+              "bit_length": 1,
+              "bit_offset": 48,
+              "computed_value": null,
+              "description": "Reserved flag: RFC 791 requires this bit to be zero. (RFC 3514 jokingly redefines it as the 'Evil Bit' \u2014 an April Fools' RFC, not a real protocol feature.)",
+              "is_bad": false,
+              "raw_bytes": "00",
+              "value": 0
+            },
+            "src": {
+              "bit_length": 32,
+              "bit_offset": 96,
+              "computed_value": null,
+              "description": "Source IP: 10.0.0.5.",
+              "is_bad": false,
+              "raw_bytes": "0a 00 00 05",
+              "value": "10.0.0.5"
+            },
+            "total_length": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Total length: 156 B (header 20 + payload 136). Datagrams larger than the link MTU must be fragmented.",
+              "is_bad": false,
+              "raw_bytes": "00 9c",
+              "value": 156
+            },
+            "ttl": {
+              "bit_length": 8,
+              "bit_offset": 64,
+              "computed_value": null,
+              "description": "TTL: 64. Decremented by each router; when 0 the packet is discarded (ICMP Time Exceeded, type 11). Traceroute uses TTL=1,2,\u2026",
+              "is_bad": false,
+              "raw_bytes": "40",
+              "value": 64
+            },
+            "version": {
+              "bit_length": 4,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "IP version: 4 = IPv4.  Upper nibble of byte 0.",
+              "is_bad": false,
+              "raw_bytes": "45",
+              "value": 4
+            }
+          },
+          "name": "IPv4",
+          "notes": {
+            "is_first_fragment": true,
+            "is_fragmented": false
+          },
+          "payload_offset": 20,
+          "raw_bytes": "45 00 00 9c 00 01 00 00 40 11 0d ab 0a 00 00 05 a2 9f c0 01"
+        },
+        {
+          "fields": {
+            "checksum": {
+              "bit_length": 16,
+              "bit_offset": 48,
+              "computed_value": 61011,
+              "description": "Checksum: received=0xEE53, computed=0xEE53. Covers UDP header + data + pseudo-header.",
+              "is_bad": false,
+              "raw_bytes": "ee 53",
+              "value": 61011
+            },
+            "dst_port": {
+              "bit_length": 16,
+              "bit_offset": 16,
+              "computed_value": null,
+              "description": "Destination port: 2408 (WARP/WireGuard (Cloudflare)). Demultiplexes the datagram to the correct application socket.",
+              "is_bad": false,
+              "raw_bytes": "09 68",
+              "value": 2408
+            },
+            "length": {
+              "bit_length": 16,
+              "bit_offset": 32,
+              "computed_value": null,
+              "description": "UDP length: 136 B (header 8 + payload 128 B). Unlike TCP, UDP delivers whole datagrams \u2014 no stream reassembly.",
+              "is_bad": false,
+              "raw_bytes": "00 88",
+              "value": 136
+            },
+            "src_port": {
+              "bit_length": 16,
+              "bit_offset": 0,
+              "computed_value": null,
+              "description": "Source port: 51820 (WireGuard).",
+              "is_bad": false,
+              "raw_bytes": "ca 6c",
+              "value": 51820
+            }
+          },
+          "name": "UDP",
+          "notes": {},
+          "payload_offset": 8,
+          "raw_bytes": "ca 6c 09 68 00 88 ee 53"
+        }
+      ],
+      "raw_frame": "00 1a 2b 3c 4d 5e aa bb cc 00 11 22 08 00 45 00 00 9c 00 01 00 00 40 11 0d ab 0a 00 00 05 a2 9f c0 01 ca 6c 09 68 00 88 ee 53 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f",
+      "timestamp": 1700000006.006
+    }
+  ],
+  "snaplen": 65535,
+  "source": "03_mixed_protocols.pcap"
+}

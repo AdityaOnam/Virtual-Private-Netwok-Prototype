@@ -14,6 +14,8 @@ import json
 from pathlib import Path
 
 from vpn_core.logger import get_logger
+from oslab.resilience.atomicio import atomic_write_json
+from . import theme
 
 
 class SettingsPanel(QDialog):
@@ -64,52 +66,16 @@ class SettingsPanel(QDialog):
         
         self.save_button = QPushButton("Save")
         self.save_button.clicked.connect(self.save_settings)
-        self.save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #27ae60;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2ecc71;
-            }
-        """)
-        
+        theme.set_variant(self.save_button, "primary")
+
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.reject)
-        self.cancel_button.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-        """)
-        
+        theme.set_variant(self.cancel_button, "ghost")
+
         self.reset_button = QPushButton("Reset to Defaults")
         self.reset_button.clicked.connect(self.reset_settings)
-        self.reset_button.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-        """)
-        
+        theme.set_variant(self.reset_button, "danger")
+
         button_layout.addWidget(self.reset_button)
         button_layout.addStretch()
         button_layout.addWidget(self.cancel_button)
@@ -329,7 +295,7 @@ Architecture: {platform.machine()}
             settings_file = Path("config") / "settings.json"
             
             if settings_file.exists():
-                with open(settings_file, 'r') as f:
+                with open(settings_file, 'r', encoding='utf-8') as f:
                     self.settings = json.load(f)
             else:
                 self.settings = self.get_default_settings()
@@ -413,9 +379,9 @@ Architecture: {platform.machine()}
             settings_file = Path("config") / "settings.json"
             settings_file.parent.mkdir(exist_ok=True)
             
-            with open(settings_file, 'w') as f:
-                json.dump(self.settings, f, indent=2)
-            
+            # Atomic: a crash mid-save can never leave a truncated settings.json
+            atomic_write_json(settings_file, self.settings)
+
             self.logger.info("Settings saved successfully")
             self.settings_changed.emit(self.settings)
             
@@ -448,7 +414,7 @@ Architecture: {platform.machine()}
         
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, 'r', encoding='utf-8') as f:
                     imported_settings = json.load(f)
                 
                 self.settings.update(imported_settings)
@@ -468,9 +434,8 @@ Architecture: {platform.machine()}
         
         if file_path:
             try:
-                with open(file_path, 'w') as f:
-                    json.dump(self.settings, f, indent=2)
-                
+                atomic_write_json(file_path, self.settings)
+
                 QMessageBox.information(self, "Success", "Configuration exported successfully!")
                 
             except Exception as e:
@@ -488,13 +453,36 @@ Architecture: {platform.machine()}
         
         if reply == QMessageBox.Yes:
             try:
+                # 1. Clean up active firewall rules and WireGuard interfaces first
+                if self.parent() and hasattr(self.parent(), 'vpn_handler'):
+                    handler = self.parent().vpn_handler
+                    if hasattr(handler, 'cleanup_stale_configurations'):
+                        handler.cleanup_stale_configurations()
+                
+                # 2. Reset config directory
                 config_dir = Path("config")
                 if config_dir.exists():
                     import shutil
                     shutil.rmtree(config_dir)
-                    config_dir.mkdir()
+                config_dir.mkdir(exist_ok=True)
+                
+                # 3. Recreate servers.json and settings.json
+                if self.parent() and hasattr(self.parent(), 'vpn_handler'):
+                    handler = self.parent().vpn_handler
+                    if hasattr(handler, '_load_servers'):
+                        handler._load_servers()
+                    # Reload the main window settings defaults
+                    self.parent().settings = self.get_default_settings()
+                    # Re-save default settings to config/settings.json
+                    settings_file = config_dir / "settings.json"
+                    atomic_write_json(settings_file, self.parent().settings)
+
+                # 4. Refresh main window UI
+                if self.parent() and hasattr(self.parent(), 'load_servers'):
+                    self.parent().load_servers()
                 
                 QMessageBox.information(self, "Success", "Configuration reset successfully!")
+                self.accept()
                 
             except Exception as e:
                 self.logger.error(f"Failed to reset configuration: {e}")

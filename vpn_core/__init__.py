@@ -3,7 +3,6 @@ OnamVPN Core Module
 
 This module contains the core VPN functionality including:
 - WireGuard integration
-- Encryption utilities
 - Speed testing
 - Logging
 """

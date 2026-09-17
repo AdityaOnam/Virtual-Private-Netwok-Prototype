@@ -4,9 +4,10 @@ Main window for OnamVPN GUI
 
 import sys
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QStatusBar, QMessageBox,
-    QProgressBar, QGroupBox, QGridLayout, QScrollArea, QSystemTrayIcon, QMenu
+    QProgressBar, QGroupBox, QGridLayout, QScrollArea, QSystemTrayIcon, QMenu,
+    QApplication
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QThread
 from PySide6.QtGui import QFont, QPixmap, QIcon, QAction
@@ -14,6 +15,7 @@ from typing import Optional
 
 from .server_grid import ServerGrid
 from .settings_panel import SettingsPanel
+from . import theme
 from vpn_core.logger import get_logger
 from pathlib import Path
 import json
@@ -54,6 +56,46 @@ class ConnectionMonitor(QThread):
         self.running = False
 
 
+class ConnectionWorker(QThread):
+    """
+    Runs connect / disconnect off the GUI thread.
+
+    Both operations block for several seconds: bringing a tunnel up runs
+    `wireguard.exe /uninstalltunnelservice`, writes a config, runs
+    `/installtunnelservice`, and then shells out to PowerShell twice to apply
+    the kill-switch and DNS-leak firewall rules. Starting PowerShell alone
+    costs a second or two each time.
+
+    Calling that directly from the button handler froze the Qt event loop for
+    the whole duration, so the window could not repaint — which is what the
+    stutter on clicking Connect was. Qt cannot redraw a widget while the
+    thread that owns it is sitting inside subprocess.run.
+
+    The worker touches no widgets. It emits a signal and the GUI thread
+    updates itself, which is the only safe direction.
+    """
+
+    finished_ok = Signal(bool, str, str)   # success, action, message
+
+    def __init__(self, vpn_handler, action: str, server_id: str = ""):
+        super().__init__()
+        self.vpn_handler = vpn_handler
+        self.action = action               # "connect" or "disconnect"
+        self.server_id = server_id
+
+    def run(self):
+        try:
+            if self.action == "connect":
+                ok = bool(self.vpn_handler.connect_to_server(self.server_id))
+                message = "" if ok else "Failed to initiate connection"
+            else:
+                ok = bool(self.vpn_handler.disconnect())
+                message = "" if ok else "Failed to disconnect"
+            self.finished_ok.emit(ok, self.action, message)
+        except Exception as exc:
+            self.finished_ok.emit(False, self.action, f"{type(exc).__name__}: {exc}")
+
+
 class MainWindow(QMainWindow):
     """Main application window"""
     
@@ -62,30 +104,33 @@ class MainWindow(QMainWindow):
         self.vpn_handler = vpn_handler
         self.logger = get_logger(__name__)
         self.selected_server = None
-        
+        self.current_theme = "light"
+
+        # Load preferences first — load_servers() below kicks off an async
+        # ping scan whose completion (on_auto_connect_best) needs self.settings
+        # to already exist and reflect the real saved values.
+        self.settings = self.load_settings()
+
         # Initialize UI
         self.init_ui()
         self.setup_connections()
-        
+
+        # Apply saved theme and language
+        self.apply_theme(self.settings.get("theme", "Light"))
+        self.apply_language(self.settings.get("language", "English"))
+
         # Start connection monitoring
         self.connection_monitor = ConnectionMonitor(vpn_handler)
         self.connection_monitor.status_updated.connect(self.update_connection_status)
         self.connection_monitor.start()
-        
-        # Load servers
+
+        # Load servers (triggers an async ping scan and, if auto_connect is
+        # enabled in settings, an eventual connect to the fastest one)
         self.load_servers()
 
-        # Apply saved theme if present
-        self.apply_saved_theme()
-        # Load preferences
-        self.settings = self.load_settings()
-        # Apply saved language
-        self.apply_language(self.settings.get("language", "English"))
         # Start minimized if requested
         if self.settings.get("start_minimized", False):
             self.hide()
-        # Apply saved language
-        self.apply_saved_language()
     
     def init_ui(self):
         """Initialize the user interface"""
@@ -119,70 +164,88 @@ class MainWindow(QMainWindow):
         
         # Status bar
         self.create_status_bar()
-        
-        # Apply styles
-        self.apply_styles()
-    
+        # Note: theme is applied once, right after init_ui(), in __init__
+
     def create_header(self, parent_layout):
         """Create header section"""
         header_frame = QFrame()
-        header_frame.setFrameStyle(QFrame.StyledPanel)
+        header_frame.setFrameStyle(QFrame.NoFrame)
         header_layout = QVBoxLayout(header_frame)
-        
+
         # Title
-        self.title_label = QLabel("OnamVPN")
+        self.title_label = QLabel("🛡️  OnamVPN")
+        self.title_label.setObjectName("titleLabel")
         self.title_label.setAlignment(Qt.AlignCenter)
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
         self.title_label.setFont(title_font)
-        self.title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
-        
+
         # Subtitle
         self.subtitle_label = QLabel("Local VPN with GUI - Secure & Fast")
+        self.subtitle_label.setObjectName("subtitleLabel")
         self.subtitle_label.setAlignment(Qt.AlignCenter)
-        self.subtitle_label.setStyleSheet("color: #7f8c8d; margin-bottom: 10px;")
-        
+
         header_layout.addWidget(self.title_label)
         header_layout.addWidget(self.subtitle_label)
-        
+
         parent_layout.addWidget(header_frame)
-    
+
     def create_status_panel(self, parent_layout):
         """Create connection status panel"""
         status_group = QGroupBox("Connection Status")
         status_layout = QGridLayout(status_group)
-        
-        # Status indicator
+
+        # Status indicator (pill)
         self.status_label = QLabel("Disconnected")
         self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("""
-            QLabel {
-                background-color: #e74c3c;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-        """)
-        
+        self.status_label.setMinimumHeight(40)
+
         # Connection info
         self.connection_info = QLabel("Ready to connect")
+        self.connection_info.setObjectName("subtitleLabel")
         self.connection_info.setAlignment(Qt.AlignCenter)
-        self.connection_info.setStyleSheet("color: #7f8c8d;")
-        
+
         # Progress bar for connection
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         self.progress_bar.setRange(0, 0)  # Indeterminate progress
-        
+        self.progress_bar.setTextVisible(False)
+
         status_layout.addWidget(self.status_label, 0, 0)
         status_layout.addWidget(self.connection_info, 1, 0)
         status_layout.addWidget(self.progress_bar, 2, 0)
-        
+
         parent_layout.addWidget(status_group)
         # keep reference for language updates
         self.status_group = status_group
+        self._set_status_pill("Disconnected", "neutral")
+
+    def _set_status_pill(self, text: str, kind: str):
+        """
+        Update the big connection-status label, using a state color
+        (success/warning/danger/neutral) blended with the current theme —
+        this is dynamic per-connection-state, not per-theme, so it stays
+        inline rather than living in the shared app stylesheet.
+        """
+        p = theme.palette(self.current_theme)
+        color_map = {
+            "success": p["success"],
+            "warning": p["warning"],
+            "danger":  p["danger"],
+            "neutral": p["text_muted"],
+        }
+        bg = color_map.get(kind, p["text_muted"])
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {bg};
+                color: #ffffff;
+                padding: 10px;
+                border-radius: 8px;
+                font-weight: 700;
+            }}
+        """)
     
     def create_server_selection(self, parent_layout):
         """Create server selection section"""
@@ -208,70 +271,29 @@ class MainWindow(QMainWindow):
     def create_control_buttons(self, parent_layout):
         """Create control buttons"""
         button_layout = QHBoxLayout()
-        
+        button_layout.setSpacing(12)
+
         # Connect button
         self.connect_button = QPushButton("Connect")
         self.connect_button.setEnabled(False)
-        self.connect_button.setMinimumHeight(50)
-        self.connect_button.setStyleSheet("""
-            QPushButton {
-                background-color: #27ae60;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2ecc71;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-            }
-        """)
-        
+        self.connect_button.setMinimumHeight(48)
+        theme.set_variant(self.connect_button, "primary")
+
         # Disconnect button
         self.disconnect_button = QPushButton("Disconnect")
         self.disconnect_button.setEnabled(False)
-        self.disconnect_button.setMinimumHeight(50)
-        self.disconnect_button.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-            }
-        """)
-        
+        self.disconnect_button.setMinimumHeight(48)
+        theme.set_variant(self.disconnect_button, "danger")
+
         # Settings button
-        self.settings_button = QPushButton("Settings")
-        self.settings_button.setMinimumHeight(50)
-        self.settings_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-        """)
-        
+        self.settings_button = QPushButton("⚙  Settings")
+        self.settings_button.setMinimumHeight(48)
+        theme.set_variant(self.settings_button, "ghost")
+
         button_layout.addWidget(self.connect_button)
         button_layout.addWidget(self.disconnect_button)
         button_layout.addWidget(self.settings_button)
-        
+
         parent_layout.addLayout(button_layout)
     
     def create_status_bar(self):
@@ -307,53 +329,28 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
     
-    def apply_styles(self):
-        """Apply default (light) application styles"""
-        self.setStyleSheet(self.light_stylesheet())
-
-    def light_stylesheet(self) -> str:
-        return (
-            """
-            QMainWindow { background-color: #ecf0f1; }
-            QGroupBox { font-weight: bold; border: 2px solid #bdc3c7; border-radius: 5px; margin-top: 10px; padding-top: 10px; }
-            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px 0 5px; }
-            QLabel { color: #2c3e50; }
+    def apply_theme(self, theme_name: str):
         """
-        )
-
-    def dark_stylesheet(self) -> str:
-        return (
-            """
-            QMainWindow { background-color: #1e1f22; }
-            QGroupBox { font-weight: bold; border: 2px solid #3a3d41; border-radius: 5px; margin-top: 10px; padding-top: 10px; color: #e0e0e0; }
-            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px 0 5px; }
-            QLabel { color: #e0e0e0; }
-            QPushButton { background-color: #2d2f34; color: #e0e0e0; border: 1px solid #3a3d41; border-radius: 5px; }
-            QPushButton:hover { background-color: #36383d; }
-            QStatusBar { color: #e0e0e0; }
-            QScrollArea { background-color: #1e1f22; }
+        Switch Light/Dark theme app-wide: the QSS is set on the QApplication
+        (not just this window) so the Settings dialog and any message boxes
+        pick it up too, and every ServerCard is explicitly re-themed since
+        Qt does not cascade a widget's own inline stylesheet.
         """
-        )
+        self.current_theme = theme.normalize(theme_name)
+        app = QApplication.instance()
+        theme.apply_qpalette(app, self.current_theme)
+        app.setStyleSheet(theme.app_stylesheet(self.current_theme))
 
-    def apply_saved_theme(self):
-        """Read config/settings.json and apply theme if Dark selected"""
-        try:
-            settings_file = Path("config") / "settings.json"
-            if settings_file.exists():
-                with open(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                theme = (settings or {}).get("theme", "Light")
-                self.apply_theme(theme)
-        except Exception as e:
-            self.logger.warning(f"Failed to apply saved theme: {e}")
+        # Re-apply the current connection state's pill color for the new theme
+        if hasattr(self, "status_label"):
+            is_connected = getattr(self.vpn_handler, "is_connected", False)
+            self._set_status_pill(
+                self.status_label.text(),
+                "success" if is_connected else "neutral"
+            )
 
-    def apply_theme(self, theme: str):
-        """Switch between Light/Dark stylesheets"""
-        theme = (theme or "Light").lower()
-        if theme == "dark":
-            self.setStyleSheet(self.dark_stylesheet())
-        else:
-            self.setStyleSheet(self.light_stylesheet())
+        if hasattr(self, "server_grid"):
+            self.server_grid.set_theme(self.current_theme)
 
     def load_settings(self) -> dict:
         try:
@@ -366,19 +363,6 @@ class MainWindow(QMainWindow):
         return {}
 
     # ---------------- Language support -----------------
-    def apply_saved_language(self):
-        """Apply language from settings.json if available"""
-        try:
-            settings_file = Path("config") / "settings.json"
-            language = "English"
-            if settings_file.exists():
-                with open(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    language = (settings or {}).get("language", "English")
-            self.apply_language(language)
-        except Exception as e:
-            self.logger.warning(f"Failed to apply saved language: {e}")
-
     def apply_language(self, language: str):
         """Update key UI texts according to the selected language"""
         lang = (language or "English").lower()
@@ -459,25 +443,6 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Failed to load servers: {e}")
             QMessageBox.critical(self, "Error", f"Failed to load servers: {e}")
 
-    def try_auto_connect(self):
-        """Attempt auto-connect to last or default server"""
-        try:
-            # Prefer last_connected in servers.json
-            servers_file = Path("config") / "servers.json"
-            server_id = None
-            if servers_file.exists():
-                import json as _json
-                with open(servers_file, 'r', encoding='utf-8') as f:
-                    data = _json.load(f)
-                server_id = data.get('last_connected') or data.get('default_server')
-            if not server_id:
-                return
-            # Kick off connection silently
-            self.selected_server = {'id': server_id, 'name': server_id, 'flag': ''}
-            self.connect_to_server()
-        except Exception as e:
-            self.logger.warning(f"Auto-connect skipped: {e}")
-    
     def on_server_selected(self, server):
         """Handle server selection"""
         self.selected_server = server
@@ -486,7 +451,10 @@ class MainWindow(QMainWindow):
         self.logger.info(f"Selected server: {server['name']}")
 
     def on_auto_connect_best(self, server):
-        """Auto-connect to the fastest server after ping scan completes."""
+        """Auto-connect to the fastest server after ping scan completes,
+        but only if the user opted in via the Settings 'auto_connect' option."""
+        if not self.settings.get("auto_connect", False):
+            return
         if self.vpn_handler.is_connected:
             return  # Already connected — don't interrupt
         self.logger.info(
@@ -508,31 +476,86 @@ class MainWindow(QMainWindow):
             self.progress_bar.setVisible(True)
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(False)
-            self.status_label.setText("Connecting...")
-            self.status_label.setStyleSheet("""
-                QLabel {
-                    background-color: #f39c12;
-                    color: white;
-                    padding: 10px;
-                    border-radius: 5px;
-                    font-weight: bold;
-                }
-            """)
+            self._set_status_pill("Connecting...", "warning")
             self.connection_info.setText(f"Connecting to {self.selected_server['name']}...")
             
-            # Start connection
-            success = self.vpn_handler.connect_to_server(self.selected_server['id'])
-            
-            if success:
-                self.status_bar.showMessage("Connection initiated")
-                if getattr(self, 'settings', {}).get("show_notifications", True) and hasattr(self, 'tray_icon'):
-                    self.tray_icon.showMessage("OnamVPN", f"Connecting to {self.selected_server['name']}", QSystemTrayIcon.Information, 3000)
-            else:
-                self.handle_connection_error("Failed to initiate connection")
-                
+            # Run the connection on a worker thread. Doing it here would block
+            # the event loop for several seconds and freeze the window.
+            self._start_connection_worker("connect", self.selected_server['id'])
+
         except Exception as e:
             self.logger.error(f"Connection error: {e}")
             self.handle_connection_error(str(e))
+
+    def _start_connection_worker(self, action: str, server_id: str = ""):
+        """
+        Run connect/disconnect off the GUI thread, queueing if one is in flight.
+
+        Dropping the request when busy is not acceptable, and the first version
+        of this did exactly that. Bringing the tunnel up takes several seconds,
+        and clicking Disconnect during it logged "Disconnecting from server",
+        set the status pill, and then returned without doing anything — while
+        the connect worker carried on and enabled the kill switch afterwards.
+        The UI said one thing and the machine did another:
+
+            Connected! Cloudflare WARP tunnel active.
+            Disconnecting from server          <- click, silently discarded
+            Kill switch ENABLED                <- connect still finishing
+
+        A later request now supersedes any earlier pending one and runs as
+        soon as the current operation finishes, so the last thing clicked is
+        what the machine ends up doing.
+        """
+        existing = getattr(self, '_connection_worker', None)
+        if existing is not None and existing.isRunning():
+            self._pending_action = (action, server_id)
+            self.logger.info(
+                "%s requested while a %s is in flight — queued",
+                action, existing.action,
+            )
+            return
+
+        self._pending_action = None
+        self._connection_worker = ConnectionWorker(self.vpn_handler, action, server_id)
+        self._connection_worker.finished_ok.connect(self._on_connection_finished)
+        self._connection_worker.finished.connect(self._run_pending_action)
+        self._connection_worker.start()
+
+    def _run_pending_action(self):
+        """Start whatever was requested while the last operation was running."""
+        pending = getattr(self, '_pending_action', None)
+        if not pending:
+            return
+        self._pending_action = None
+        action, server_id = pending
+        self.logger.info("running queued %s", action)
+        self._start_connection_worker(action, server_id)
+
+    def _on_connection_finished(self, success: bool, action: str, message: str):
+        """Back on the GUI thread — safe to touch widgets here."""
+        if action == "connect":
+            if success:
+                self.status_bar.showMessage("Connection initiated")
+                name = (self.selected_server or {}).get('name', 'server')
+                if (getattr(self, 'settings', {}).get("show_notifications", True)
+                        and hasattr(self, 'tray_icon')):
+                    self.tray_icon.showMessage(
+                        "OnamVPN", f"Connecting to {name}",
+                        QSystemTrayIcon.Information, 3000,
+                    )
+            else:
+                self.handle_connection_error(message or "Failed to initiate connection")
+        else:
+            if success:
+                self.status_bar.showMessage("Disconnected successfully")
+                if (getattr(self, 'settings', {}).get("show_notifications", True)
+                        and hasattr(self, 'tray_icon')):
+                    self.tray_icon.showMessage(
+                        "OnamVPN", "Disconnected",
+                        QSystemTrayIcon.Information, 3000,
+                    )
+            else:
+                self.handle_disconnection_error(message or "Failed to disconnect")
     
     def disconnect_from_server(self):
         """Disconnect from current server"""
@@ -542,19 +565,14 @@ class MainWindow(QMainWindow):
             # Update UI
             self.progress_bar.setVisible(True)
             self.disconnect_button.setEnabled(False)
-            self.status_label.setText("Disconnecting...")
+            self._set_status_pill("Disconnecting...", "warning")
             self.connection_info.setText("Disconnecting...")
             
-            # Disconnect
-            success = self.vpn_handler.disconnect()
-            
-            if success:
-                self.status_bar.showMessage("Disconnected successfully")
-                if getattr(self, 'settings', {}).get("show_notifications", True) and hasattr(self, 'tray_icon'):
-                    self.tray_icon.showMessage("OnamVPN", "Disconnected", QSystemTrayIcon.Information, 3000)
-            else:
-                self.handle_disconnection_error("Failed to disconnect")
-                
+            # Same reasoning as connect: tearing the tunnel down runs
+            # wireguard.exe and two PowerShell firewall commands, which would
+            # block the event loop if done here.
+            self._start_connection_worker("disconnect")
+
         except Exception as e:
             self.logger.error(f"Disconnection error: {e}")
             self.handle_disconnection_error(str(e))
@@ -574,24 +592,15 @@ class MainWindow(QMainWindow):
                 if handshake_ago is not None:
                     if handshake_ok:
                         label_text = f"✅ Connected  (handshake {handshake_ago}s ago)"
-                        bg_color   = "#27ae60"  # green
+                        pill_kind  = "success"
                     else:
                         label_text = f"⚠️ Tunnel up — handshake stale ({handshake_ago}s ago)"
-                        bg_color   = "#e67e22"  # orange — tunnel installed but no response
+                        pill_kind  = "warning"
                 else:
                     label_text = "Connected"
-                    bg_color   = "#27ae60"
+                    pill_kind  = "success"
 
-                self.status_label.setText(label_text)
-                self.status_label.setStyleSheet(f"""
-                    QLabel {{
-                        background-color: {bg_color};
-                        color: white;
-                        padding: 10px;
-                        border-radius: 5px;
-                        font-weight: bold;
-                    }}
-                """)
+                self._set_status_pill(label_text, pill_kind)
 
                 if status['server']:
                     server = status['server']
@@ -608,16 +617,7 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setVisible(False)
                 self.connect_button.setEnabled(bool(self.selected_server))
                 self.disconnect_button.setEnabled(False)
-                self.status_label.setText("Disconnected")
-                self.status_label.setStyleSheet("""
-                    QLabel {
-                        background-color: #e74c3c;
-                        color: white;
-                        padding: 10px;
-                        border-radius: 5px;
-                        font-weight: bold;
-                    }
-                """)
+                self._set_status_pill("Disconnected", "neutral")
 
                 if self.selected_server:
                     self.connection_info.setText(f"Ready to connect to {self.selected_server['name']}")
@@ -633,16 +633,7 @@ class MainWindow(QMainWindow):
         """Handle connection error"""
         self.progress_bar.setVisible(False)
         self.connect_button.setEnabled(bool(self.selected_server))
-        self.status_label.setText("Connection Failed")
-        self.status_label.setStyleSheet("""
-            QLabel {
-                background-color: #e74c3c;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-        """)
+        self._set_status_pill("Connection Failed", "danger")
         self.connection_info.setText("Connection failed")
         self.status_bar.showMessage("Connection failed")
         
@@ -656,12 +647,18 @@ class MainWindow(QMainWindow):
         
         QMessageBox.critical(self, "Disconnection Error", error_message)
     
+    def on_settings_changed(self, new_settings: dict):
+        """Apply and remember settings the moment the user saves them"""
+        self.settings = new_settings
+        self.apply_theme(new_settings.get("theme", "Light"))
+        self.apply_language(new_settings.get("language", "English"))
+
     def show_settings(self):
         """Show settings dialog"""
         try:
             settings_dialog = SettingsPanel(self)
-            # Apply theme and language immediately when user saves
-            settings_dialog.settings_changed.connect(lambda s: (self.apply_theme(s.get("theme", "Light")), self.apply_language(s.get("language", "English"))))
+            # Apply theme/language and refresh self.settings immediately when user saves
+            settings_dialog.settings_changed.connect(self.on_settings_changed)
             settings_dialog.exec()
         except Exception as e:
             self.logger.error(f"Settings error: {e}")

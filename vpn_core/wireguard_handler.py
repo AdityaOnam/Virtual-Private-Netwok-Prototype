@@ -9,6 +9,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from oslab.resilience.atomicio import atomic_write_json
 from .logger import get_logger
 
 
@@ -85,9 +86,8 @@ class WireGuardHandler:
         }
         
         servers_file = self.config_dir / "servers.json"
-        with open(servers_file, 'w') as f:
-            json.dump(default_servers, f, indent=2)
-        
+        atomic_write_json(servers_file, default_servers)
+
         self.logger.info("Created default server configuration")
     
     def get_available_servers(self) -> List[Dict]:
@@ -106,11 +106,6 @@ class WireGuardHandler:
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
-    
-    def is_windows(self) -> bool:
-        """Check if running on Windows"""
-        import platform
-        return platform.system().lower() == 'windows'
     
     def generate_keys(self) -> Tuple[str, str]:
         """Generate WireGuard key pair"""
@@ -167,7 +162,7 @@ PersistentKeepalive = 25
         """Save client configuration to file"""
         config_file = self.config_dir / f"{server_id}_client.conf"
         
-        with open(config_file, 'w') as f:
+        with open(config_file, 'w', encoding='utf-8') as f:
             f.write(config_content)
         
         self.logger.info(f"Saved client config for {server_id}")
@@ -228,25 +223,15 @@ PersistentKeepalive = 25
         """Thread function for establishing VPN connection"""
         try:
             self.logger.info(f"Connecting to {server['name']}...")
-            
-            # Bring up WireGuard interface (Windows uses wg.exe directly)
-            if self.is_windows():
-                # On Windows, we need to use wg.exe and create the interface manually
-                result = subprocess.run(
-                    ['wg', 'set', 'wg0', 'private-key', str(config_file)],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-            else:
-                # On Linux/macOS, use wg-quick
-                result = subprocess.run(
-                    ['wg-quick', 'up', str(config_file)],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-            
+
+            # Bring up the WireGuard interface via wg-quick (Linux/macOS)
+            result = subprocess.run(
+                ['wg-quick', 'up', str(config_file)],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
             if result.returncode == 0:
                 self.is_connected = True
                 self.current_server = server
@@ -268,23 +253,15 @@ PersistentKeepalive = 25
         try:
             if self.current_server:
                 config_file = self.config_dir / f"{self.current_server['id']}_client.conf"
-                
-                # Bring down WireGuard interface
-                if self.is_windows():
-                    result = subprocess.run(
-                        ['wg', 'del', 'wg0'],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-                else:
-                    result = subprocess.run(
-                        ['wg-quick', 'down', str(config_file)],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-                
+
+                # Bring down the WireGuard interface via wg-quick
+                result = subprocess.run(
+                    ['wg-quick', 'down', str(config_file)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
                 if result.returncode == 0:
                     self.is_connected = False
                     server_name = self.current_server['name']
@@ -367,20 +344,15 @@ PersistentKeepalive = 25
             server_config = f"""[Interface]\nPrivateKey = {private_key}\nAddress = 10.0.0.1/24\nListenPort = {port}\nPostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\nPostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE\n\n[Peer]\n# Replace with the client's public key (NOT the server's own key)\nPublicKey = REPLACE_WITH_CLIENT_PUBLIC_KEY\nAllowedIPs = 10.0.0.2/32\n"""
             # Save server configuration
             server_config_file = self.config_dir / "server.conf"
-            with open(server_config_file, 'w') as f:
+            with open(server_config_file, 'w', encoding='utf-8') as f:
                 f.write(server_config)
             # Optionally start dummy TCP
             if enable_tcp:
                 self.start_dummy_tcp_server(port)
-            # Start server
-            if self.is_windows():
-                result = subprocess.run([
-                    'wg', 'set', 'wg0', 'private-key', str(server_config_file)
-                ], capture_output=True, text=True, timeout=30)
-            else:
-                result = subprocess.run([
-                    'wg-quick', 'up', str(server_config_file)
-                ], capture_output=True, text=True, timeout=30)
+            # Start server via wg-quick
+            result = subprocess.run([
+                'wg-quick', 'up', str(server_config_file)
+            ], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 self.logger.info(f"WireGuard server started on port {port}")
                 self.logger.info(f"Server public key: {public_key}")
@@ -398,21 +370,13 @@ PersistentKeepalive = 25
             server_config_file = self.config_dir / "server.conf"
             
             if server_config_file.exists():
-                if self.is_windows():
-                    result = subprocess.run(
-                        ['wg', 'del', 'wg0'],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-                else:
-                    result = subprocess.run(
-                        ['wg-quick', 'down', str(server_config_file)],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-                
+                result = subprocess.run(
+                    ['wg-quick', 'down', str(server_config_file)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
                 if result.returncode == 0:
                     self.logger.info("WireGuard server stopped")
                 else:

@@ -9,6 +9,7 @@ import threading
 import socket
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from oslab.resilience.atomicio import atomic_write_json
 from .logger import get_logger
 
 
@@ -67,9 +68,8 @@ class SimpleVPNHandler:
         }
         
         servers_file = self.config_dir / "servers.json"
-        with open(servers_file, 'w', encoding='utf-8') as f:
-            json.dump(default_servers, f, indent=2)
-        
+        atomic_write_json(servers_file, default_servers)
+
         self.logger.info("Created default server configuration")
     
     def get_available_servers(self) -> List[Dict]:

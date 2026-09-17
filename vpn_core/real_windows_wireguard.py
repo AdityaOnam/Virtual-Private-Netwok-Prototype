@@ -12,6 +12,7 @@ import shutil
 import ctypes
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from oslab.resilience.atomicio import atomic_write_json
 from .logger import get_logger
 
 
@@ -22,8 +23,11 @@ def is_admin() -> bool:
     except Exception:
         return False
 
+import dotenv
+dotenv.load_dotenv()
+
 # Cloudflare WARP config constants
-WARP_PRIVATE_KEY    = "EL1ScVeUvB1oQ36XOBoBKR4E46BL4bMJBigXdGvrNlg="
+WARP_PRIVATE_KEY    = os.environ.get("WARP_PRIVATE_KEY", "EL1ScVeUvB1oQ36XOBoBKR4E46BL4bMJBigXdGvrNlg=")
 WARP_PUBLIC_KEY     = "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo="
 WARP_ENDPOINT       = "engage.cloudflareclient.com:2408"
 WARP_CLIENT_ADDR    = "172.16.0.2/32"
@@ -32,6 +36,11 @@ WARP_MTU            = 1280
 WARP_TUNNEL_NAME    = "wgcf-profile"   # Name as seen in WireGuard GUI
 # Safe staging directory (no spaces in path — WireGuard service requirement)
 SAFE_CONFIG_DIR     = Path("C:/OnamVPN")
+
+# Server/Client Connection Constants
+CLIENT_ADDR         = "10.0.0.2/32"
+SERVER_CIDR         = "10.0.0.1/24"
+CLIENT_LISTEN_PORT  = 51820
 
 class RealWindowsWireGuard:
     """Real Windows WireGuard implementation for actual VPN tunneling"""
@@ -46,11 +55,14 @@ class RealWindowsWireGuard:
         # Ensure config directory exists
         self.config_dir.mkdir(exist_ok=True)
         
-        # Load server configurations
-        self.servers = self._load_servers()
-        
         # Find WireGuard installation
         self.wireguard_path = self._find_wireguard_installation()
+        
+        # Clean up any leftover firewall rules and active tunnels on startup
+        self.cleanup_stale_configurations()
+        
+        # Load server configurations
+        self.servers = self._load_servers()
     
     def _find_wireguard_installation(self) -> Optional[Path]:
         """Find WireGuard installation path on Windows.
@@ -90,16 +102,90 @@ class RealWindowsWireGuard:
         servers_file = self.config_dir / "servers.json"
         
         if not servers_file.exists():
-            self.logger.warning("Servers.json not found")
-            return []
+            self.logger.warning("Servers.json not found, creating default configuration")
+            self._create_default_servers()
             
         try:
             with open(servers_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get('servers', [])
+                self.servers = data.get('servers', [])
+                return self.servers
         except Exception as e:
             self.logger.error(f"Failed to load servers: {e}")
             return []
+
+    def _create_default_servers(self):
+        """Create default server configuration containing Cloudflare WARP endpoints"""
+        default_servers = {
+            "servers": [
+                {
+                    "id": "cloudflare-warp",
+                    "name": "Cloudflare WARP",
+                    "country": "Global",
+                    "flag": "🌐",
+                    "endpoint": "engage.cloudflareclient.com:2408",
+                    "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+                    "description": "Cloudflare WARP - Nearest edge node",
+                    "region": "global",
+                    "location": "Cloudflare Global Network",
+                    "client_address": "172.16.0.2/32",
+                    "dns": "1.1.1.1, 1.0.0.1",
+                    "mtu": 1280
+                },
+                {
+                    "id": "eu-frankfurt",
+                    "name": "Frankfurt",
+                    "country": "Germany",
+                    "flag": "DE",
+                    "endpoint": "162.159.193.1:2408",
+                    "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+                    "description": "Europe - Frankfurt via Cloudflare WARP",
+                    "region": "europe",
+                    "location": "Frankfurt, Germany",
+                    "client_address": "172.16.0.2/32",
+                    "dns": "1.1.1.1, 1.0.0.1",
+                    "mtu": 1280
+                },
+                {
+                    "id": "us-newyork",
+                    "name": "New York",
+                    "country": "United States",
+                    "flag": "US",
+                    "endpoint": "162.159.192.1:2408",
+                    "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+                    "description": "United States - New York via Cloudflare WARP",
+                    "region": "americas",
+                    "location": "New York, USA",
+                    "client_address": "172.16.0.2/32",
+                    "dns": "1.1.1.1, 1.0.0.1",
+                    "mtu": 1280
+                },
+                {
+                    "id": "india-mumbai",
+                    "name": "Mumbai",
+                    "country": "India",
+                    "flag": "IN",
+                    "endpoint": "162.159.195.1:2408",
+                    "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+                    "description": "India - Mumbai via Cloudflare WARP",
+                    "region": "asia",
+                    "location": "Mumbai, India",
+                    "client_address": "172.16.0.2/32",
+                    "dns": "1.1.1.1, 1.0.0.1",
+                    "mtu": 1280
+                }
+            ],
+            "default_server": "eu-frankfurt",
+            "auto_connect": False,
+            "last_connected": None
+        }
+        
+        servers_file = self.config_dir / "servers.json"
+        try:
+            atomic_write_json(servers_file, default_servers)
+            self.logger.info("Created default server configuration (Cloudflare WARP endpoints)")
+        except Exception as e:
+            self.logger.error(f"Failed to create default server configuration: {e}")
     
     def get_available_servers(self) -> List[Dict]:
         """Get list of available servers"""
@@ -189,7 +275,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
     TUNNEL_NAME = "OnamVPN"
 
     def _stage_config(self, config_file: Path) -> Path:
-        """
+        r"""
         Copy a .conf to C:\OnamVPN (SAFE_CONFIG_DIR) and return the new path.
 
         WireGuard's tunnel service fails to start when the config path contains
@@ -198,6 +284,22 @@ AllowedIPs = 0.0.0.0/0, ::/0
         try:
             SAFE_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             dest = SAFE_CONFIG_DIR / config_file.name
+
+            # The WARP path already writes its config straight into
+            # SAFE_CONFIG_DIR, so source and destination are the same file.
+            # shutil.copy2 onto itself raises WinError 32 ("being used by
+            # another process") on Windows, which made every single connect
+            # log a warning that looked like a real failure and wasn't — the
+            # fallback used the identical path anyway.
+            try:
+                same_file = dest.exists() and config_file.resolve() == dest.resolve()
+            except OSError:
+                same_file = False
+
+            if same_file:
+                self.logger.debug(f"Config already staged at {dest}")
+                return dest
+
             shutil.copy2(config_file, dest)
             self.logger.info(f"Config staged to: {dest}")
             return dest
@@ -286,7 +388,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
             self.logger.error(f"wireguard.exe not found at {wireguard_exe}")
             return False
 
-        self.logger.info(f"Uninstalling WireGuard tunnel '{tunnel}'...")
+        self.logger.debug(f"Uninstalling WireGuard tunnel '{tunnel}'...")
         try:
             result = subprocess.run(
                 [str(wireguard_exe), "/uninstalltunnelservice", tunnel],
@@ -298,13 +400,25 @@ AllowedIPs = 0.0.0.0/0, ::/0
             if result.returncode == 0:
                 self.logger.info(f"Tunnel '{tunnel}' stopped and removed.")
                 return True
-            else:
-                stderr = result.stderr.strip() or result.stdout.strip()
-                self.logger.error(
-                    f"wireguard.exe /uninstalltunnelservice failed "
-                    f"(rc={result.returncode}): {stderr}"
+
+            stderr = result.stderr.strip() or result.stdout.strip()
+
+            # "Service does not exist" is the normal answer during startup
+            # cleanup, which speculatively removes three tunnel names that
+            # usually were never installed. Logging that at ERROR made every
+            # clean launch print three scary-looking failures, which trains
+            # you to ignore the log — and then a real failure goes unnoticed.
+            if "does not exist" in stderr.lower():
+                self.logger.debug(
+                    f"Tunnel '{tunnel}' was not installed — nothing to remove."
                 )
                 return False
+
+            self.logger.error(
+                f"wireguard.exe /uninstalltunnelservice failed "
+                f"(rc={result.returncode}): {stderr}"
+            )
+            return False
 
         except subprocess.TimeoutExpired:
             self.logger.error("Timed out waiting for wireguard.exe /uninstalltunnelservice")
@@ -313,121 +427,52 @@ AllowedIPs = 0.0.0.0/0, ::/0
             self.logger.error(f"Failed to remove WireGuard interface: {e}")
             return False
     
-    # ── Persistent key helpers ────────────────────────────────────────────────
+    def cleanup_stale_configurations(self):
+        """Clean up any leftover firewall rules and active tunnel services from previous runs/crashes."""
+        self.logger.info("Cleaning up stale WireGuard configurations, tunnels, and firewall rules...")
+        try:
+            # 1. Disable kill switch firewall rules
+            self._disable_kill_switch()
+        except Exception as e:
+            self.logger.warning(f"Failed to clear kill switch rules during cleanup: {e}")
 
-    def _load_or_create_client_keys(self, server_id: str) -> Tuple[str, str]:
-        """
-        Load an existing client key pair for this server, or generate + save a
-        new one.  Keys are stored in config/client_keys/<server_id>.key so they
-        survive restarts and don't change on every reconnect.
-        """
-        keys_dir = self.config_dir / "client_keys"
-        keys_dir.mkdir(exist_ok=True)
-        key_file = keys_dir / f"{server_id}.key"
+        try:
+            # 2. Disable DNS leak protection rules
+            self._disable_dns_leak_protection()
+        except Exception as e:
+            self.logger.warning(f"Failed to clear DNS leak protection rules during cleanup: {e}")
 
-        if key_file.exists():
+        # 3. Uninstall any leftover tunnel services
+        tunnels_to_remove = [WARP_TUNNEL_NAME, self.TUNNEL_NAME, "OnamVPN-Server"]
+        for tunnel in tunnels_to_remove:
             try:
-                with open(key_file, 'r') as f:
-                    data = json.load(f)
-                private_key = data['private_key']
-                public_key  = data['public_key']
-                self.logger.info(f"Loaded existing client keys for '{server_id}'")
-                return private_key, public_key
+                self._remove_wireguard_interface(tunnel)
             except Exception as e:
-                self.logger.warning(f"Could not load keys ({e}), generating new ones")
+                self.logger.warning(f"Failed to remove stale tunnel interface '{tunnel}': {e}")
+    
+    
+    # ── App settings ───────────────────────────────────────────────────────────
 
-        # Generate fresh pair
-        private_key, public_key = self.generate_keys()
+    def _load_app_settings(self) -> dict:
+        """
+        Read the user's saved preferences from config/settings.json so
+        connect_to_server() can honor the kill-switch / DNS-leak-protection
+        checkboxes instead of always forcing them on.
+        """
+        settings_file = self.config_dir / "settings.json"
+        defaults = {"killswitch": False, "dns_leak_protection": True}
+        if not settings_file.exists():
+            return defaults
         try:
-            with open(key_file, 'w') as f:
-                json.dump({'private_key': private_key, 'public_key': public_key}, f)
-            self.logger.info(f"Generated and saved new client keys for '{server_id}'")
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                data = json.load(f) or {}
+            defaults.update(data)
+            return defaults
         except Exception as e:
-            self.logger.warning(f"Could not persist client keys: {e}")
-
-        return private_key, public_key
-
-    def _load_or_create_server_keys(self) -> Tuple[str, str]:
-        """
-        Load or create persistent server key pair.
-        Stored in config/server.key so the server public key stays stable.
-        """
-        key_file = self.config_dir / "server.key"
-
-        if key_file.exists():
-            try:
-                with open(key_file, 'r') as f:
-                    data = json.load(f)
-                self.logger.info("Loaded existing server keys")
-                return data['private_key'], data['public_key']
-            except Exception as e:
-                self.logger.warning(f"Could not load server keys ({e}), regenerating")
-
-        private_key, public_key = self.generate_keys()
-        try:
-            with open(key_file, 'w') as f:
-                json.dump({'private_key': private_key, 'public_key': public_key}, f)
-            self.logger.info(f"Generated and saved server keys. Public key: {public_key}")
-        except Exception as e:
-            self.logger.warning(f"Could not persist server keys: {e}")
-
-        return private_key, public_key
-
-    def _update_server_peer_key(self, server_conf_file: Path,
-                                 server_private_key: str,
-                                 client_public_key: str,
-                                 port: int,
-                                 client_addr: str) -> bool:
-        """
-        Rewrite OnamVPN-Server.conf with the current client public key and
-        a fixed Endpoint pointing to the client's listen port, then reinstall.
-
-        This fixes 'no valid endpoint has been configured for this peer' by
-        giving the server a stable address to reach the client.
-        """
-        # Derive the host from the server port (same loopback host)
-        client_endpoint = f"127.0.0.1:{CLIENT_LISTEN_PORT}"
-
-        server_config = (
-            f"[Interface]\n"
-            f"PrivateKey = {server_private_key}\n"
-            f"Address = {SERVER_CIDR}\n"
-            f"ListenPort = {port}\n"
-            f"\n"
-            f"[Peer]\n"
-            f"# Client public key (auto-updated by OnamVPN on connect)\n"
-            f"PublicKey = {client_public_key}\n"
-            f"AllowedIPs = {client_addr}\n"
-            f"Endpoint = {client_endpoint}\n"
-            f"PersistentKeepalive = 25\n"
-        )
-        try:
-            with open(server_conf_file, 'w') as f:
-                f.write(server_config)
-            self.logger.info(
-                f"Server config updated — client key: {client_public_key}, "
-                f"client endpoint: {client_endpoint}"
-            )
-        except Exception as e:
-            self.logger.error(f"Failed to write server config: {e}")
-            return False
-
-        self.logger.info("Reinstalling server tunnel with updated config...")
-        return self._create_wireguard_interface(server_conf_file)
+            self.logger.warning(f"Could not read settings.json ({e}), using defaults")
+            return defaults
 
     # ── Connect / Disconnect ──────────────────────────────────────────────────
-
-    def _read_private_key_from_conf(self, conf_file: Path) -> Optional[str]:
-        """Read the PrivateKey value from an existing WireGuard .conf file."""
-        try:
-            with open(conf_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.lower().startswith('privatekey'):
-                        return line.split('=', 1)[1].strip()
-        except Exception:
-            pass
-        return None
 
     # ── Kill Switch & DNS Leak Protection ────────────────────────────────────
 
@@ -496,30 +541,46 @@ AllowedIPs = 0.0.0.0/0, ::/0
         Cloudflare's encrypted DNS (1.1.1.1 / 1.0.0.1) inside the tunnel.
         """
         p = self._FW_PREFIX
-        cmds = [
-            # Block DNS on all interfaces
-            f'New-NetFirewallRule -DisplayName "{p}-DNS-BlockUDP" '
-            f'-Direction Outbound -Action Block -Protocol UDP '
-            f'-RemotePort 53 -Profile Any -ErrorAction SilentlyContinue',
 
-            f'New-NetFirewallRule -DisplayName "{p}-DNS-BlockTCP" '
-            f'-Direction Outbound -Action Block -Protocol TCP '
-            f'-RemotePort 53 -Profile Any -ErrorAction SilentlyContinue',
-
-            # Allow DNS through WireGuard tunnel only
-            f'New-NetFirewallRule -DisplayName "{p}-DNS-AllowWG-UDP" '
-            f'-Direction Outbound -Action Allow -Protocol UDP '
-            f'-RemotePort 53 -InterfaceAlias "{WARP_TUNNEL_NAME}" '
-            f'-Profile Any -ErrorAction SilentlyContinue',
-
-            f'New-NetFirewallRule -DisplayName "{p}-DNS-AllowWG-TCP" '
-            f'-Direction Outbound -Action Allow -Protocol TCP '
-            f'-RemotePort 53 -InterfaceAlias "{WARP_TUNNEL_NAME}" '
-            f'-Profile Any -ErrorAction SilentlyContinue',
-        ]
-        for cmd in cmds:
-            self._run_ps(cmd)
-        self.logger.info("DNS leak protection ENABLED")
+        # Why this is scoped per-adapter rather than "block all, then allow
+        # the tunnel":
+        #
+        # Windows Defender Firewall evaluates Block rules BEFORE Allow rules.
+        # The previous version created a blanket block on outbound port 53 and
+        # then an Allow scoped to the tunnel interface, expecting the Allow to
+        # win. It does not. The blanket Block matched every DNS query
+        # including the ones inside the tunnel, so name resolution stopped
+        # completely and every lookup failed with ENOTFOUND / DNS_PROBE
+        # errors. The VPN looked connected while nothing could resolve.
+        #
+        # The fix is to make the BLOCK narrow instead of the ALLOW narrow:
+        # enumerate the adapters, skip the tunnel, and block DNS on each of
+        # the others. No rule then contradicts another, and DNS inside the
+        # tunnel is never matched by a Block at all.
+        #
+        # -ErrorAction SilentlyContinue is kept so an adapter that disappears
+        # mid-enumeration does not abort the whole loop.
+        script = (
+            f'$tunnel = "{WARP_TUNNEL_NAME}"; '
+            f'Get-NetAdapter -ErrorAction SilentlyContinue | '
+            f'Where-Object {{ $_.Name -ne $tunnel -and '
+            f'$_.InterfaceDescription -notmatch "WireGuard|Wintun" }} | '
+            f'ForEach-Object {{ '
+            f'New-NetFirewallRule -DisplayName "{p}-DNS-Block-UDP-$($_.Name)" '
+            f'-Direction Outbound -Action Block -Protocol UDP -RemotePort 53 '
+            f'-InterfaceAlias $_.Name -Profile Any '
+            f'-ErrorAction SilentlyContinue | Out-Null; '
+            f'New-NetFirewallRule -DisplayName "{p}-DNS-Block-TCP-$($_.Name)" '
+            f'-Direction Outbound -Action Block -Protocol TCP -RemotePort 53 '
+            f'-InterfaceAlias $_.Name -Profile Any '
+            f'-ErrorAction SilentlyContinue | Out-Null '
+            f'}}'
+        )
+        self._run_ps(script)
+        self.logger.info(
+            "DNS leak protection ENABLED (port 53 blocked on physical adapters; "
+            "tunnel DNS left reachable)"
+        )
 
     def _disable_dns_leak_protection(self) -> None:
         """Remove all OnamVPN DNS-leak-protection firewall rules."""
@@ -558,13 +619,13 @@ AllowedIPs = 0.0.0.0/0, ::/0
             warp_conf = SAFE_CONFIG_DIR / "wgcf-profile.conf"
             SAFE_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             config_content = self.create_wireguard_config(server, WARP_PRIVATE_KEY)
-            with open(warp_conf, 'w') as f:
+            with open(warp_conf, 'w', encoding='utf-8') as f:
                 f.write(config_content)
             self.logger.info(f"WARP config written to {warp_conf}")
 
             # Also keep project config in sync
             project_conf = self.config_dir / "OnamVPN-eu-frankfurt.conf"
-            with open(project_conf, 'w') as f:
+            with open(project_conf, 'w', encoding='utf-8') as f:
                 f.write(config_content)
 
             # Activate the tunnel
@@ -575,9 +636,12 @@ AllowedIPs = 0.0.0.0/0, ::/0
                 self.is_connected = True
                 self.current_server = server
                 self.logger.info("Connected! Cloudflare WARP tunnel active.")
-                # Enable security features
-                self._enable_kill_switch()
-                self._enable_dns_leak_protection()
+                # Enable security features according to the user's saved settings
+                app_settings = self._load_app_settings()
+                if app_settings.get("killswitch", False):
+                    self._enable_kill_switch()
+                if app_settings.get("dns_leak_protection", True):
+                    self._enable_dns_leak_protection()
                 return True
             else:
                 return False
@@ -634,9 +698,10 @@ AllowedIPs = 0.0.0.0/0, ::/0
             return status
 
         tunnel_name = getattr(self, '_active_tunnel_name', None)
+        client_addr = (self.current_server.get('client_address') or WARP_CLIENT_ADDR) if self.current_server else WARP_CLIENT_ADDR
         if not tunnel_name:
             status['interface'] = 'OnamVPN-Tunnel'
-            status['public_ip'] = CLIENT_ADDR.split('/')[0]
+            status['public_ip'] = client_addr.split('/')[0]
             return status
 
         try:
@@ -648,7 +713,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
             if result.returncode == 0:
                 output = result.stdout
                 status['interface'] = tunnel_name
-                status['public_ip'] = CLIENT_ADDR.split('/')[0]
+                status['public_ip'] = client_addr.split('/')[0]
 
                 # Parse 'latest handshake: X seconds ago' from wg show output
                 for line in output.splitlines():
@@ -736,7 +801,7 @@ AllowedIPs = {CLIENT_ADDR}
 """
             # Save server configuration
             server_config_file = self.config_dir / "OnamVPN-Server.conf"
-            with open(server_config_file, 'w') as f:
+            with open(server_config_file, 'w', encoding='utf-8') as f:
                 f.write(server_config)
             self.logger.info("REAL WireGuard server configuration created!")
             self.logger.info(f"Server public key: {public_key}")

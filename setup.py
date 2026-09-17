@@ -137,18 +137,19 @@ def update_server_config(server_private_key, server_public_key, client_public_ke
     try:
         # Read servers.json
         import json
-        
-        with open('config/servers.json', 'r') as f:
+        from oslab.resilience.atomicio import atomic_write_json
+
+        with open('config/servers.json', 'r', encoding='utf-8') as f:
             servers_data = json.load(f)
-        
+
         # Update server configurations
         for server in servers_data['servers']:
             server['public_key'] = server_public_key
-        
-        # Save updated configuration
-        with open('config/servers.json', 'w') as f:
-            json.dump(servers_data, f, indent=2)
-        
+
+        # Save updated configuration (atomic — a crash here would otherwise
+        # leave servers.json truncated and the app unable to start)
+        atomic_write_json('config/servers.json', servers_data)
+
         print("   Updated server configuration")
         
     except Exception as e:
@@ -169,7 +170,7 @@ PublicKey = REPLACE_WITH_CLIENT_PUBLIC_KEY
 AllowedIPs = 10.0.0.2/32
 """
     
-    with open('config/server.conf', 'w') as f:
+    with open('config/server.conf', 'w', encoding='utf-8') as f:
         f.write(server_config)
     
     print("   Created: config/server.conf")
@@ -187,7 +188,7 @@ AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 """
     
-    with open('config/client.conf', 'w') as f:
+    with open('config/client.conf', 'w', encoding='utf-8') as f:
         f.write(client_config)
     
     print("   Created: config/client.conf")

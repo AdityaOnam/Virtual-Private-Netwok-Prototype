@@ -1,0 +1,28 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+
+# WireGuard keys and secrets — never commit these
+keys/
+config/client_keys/
+config/server.key
+config/*.conf
+
+# Runtime-generated config (recreated automatically on first run)
+config/servers.json.bak
+
+# Logs
+logs/
+*.log
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Environment variables
+.env
